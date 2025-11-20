@@ -3,6 +3,7 @@ import image2 from "../image/image2.png"
 import '../landing.css'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { Link } from 'react-router-dom'
 
 function Landing() {
   return (
@@ -24,9 +25,11 @@ function Landing() {
               className="w-screen max-w-4xl mx-auto"
             />
 
-            <button className="btn glitch">
-              <span>Get Start</span>
-            </button>
+            <Link to={'/login'}>
+              <button className="btn glitch">
+                <span>Get Start</span>
+              </button>
+            </Link>
 
           </div>
         </section>
@@ -85,24 +88,24 @@ function Landing() {
                     </div>
 
                   </div>
-                  
+
                 </div>
-                
+
               </div>
-             <div className='flex'>
+              <div className='flex'>
                 <div className='rounded-3xl shake-strong transition-transform duration-300 hover:scale-105 hover:shadow-2xl' style={{ height: "400px", backgroundColor: "#FFA86B", width: "600px", marginTop: "40px", marginLeft: "200px" }}>
-                    <h1 style={{ fontFamily: "Roboto" }} className='-mt-10 text-3xl text-center font-bold'><br /></h1>
-                    <img style={{ marginLeft: "100px", marginTop: "20px", height: "240px", width: "auto" }} src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFPT7PJZpuqqm_QZ-sXoXNWFEif13iHLnYtA&s" alt="no image" />
-                    <p style={{ fontFamily: "Roboto", marginLeft: "70px", marginTop: "20px" }}><b><i>In every line, there lives a story waiting <br /> to be discovered</i></b> <br /><span style={{ marginLeft: "180px" }}>— Aria Winters</span> </p>
-  
-                  </div>
-                  <div className='rounded-3xl shake-strong transition-transform duration-300 hover:scale-105 hover:shadow-2xl' style={{ height: "400px", backgroundColor: "#DCE3DC", width: "500px", marginTop: "40px", marginLeft: "20px" }}>
-                    <h1 style={{ fontFamily: "Roboto" }} className='-mt-10 text-3xl text-center font-bold'><br /></h1>
-                    <img style={{ marginLeft: "80px", marginTop: "20px", height: "240px", width: "auto" }} src="https://img.freepik.com/free-photo/flat-lay-travel-concept-with-camera_23-2148666240.jpg?semt=ais_incoming&w=740&q=80" alt="no image" />
-                    <p style={{ fontFamily: "Roboto", marginLeft: "70px", marginTop: "20px" }}><b><i>Creativity grows when you let your mind wander freely</i></b> <br /><span style={{ marginLeft: "160px" }}>— Elio Brooks</span> </p>
-  
-                  </div>
-             </div>
+                  <h1 style={{ fontFamily: "Roboto" }} className='-mt-10 text-3xl text-center font-bold'><br /></h1>
+                  <img style={{ marginLeft: "100px", marginTop: "20px", height: "240px", width: "auto" }} src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFPT7PJZpuqqm_QZ-sXoXNWFEif13iHLnYtA&s" alt="no image" />
+                  <p style={{ fontFamily: "Roboto", marginLeft: "70px", marginTop: "20px" }}><b><i>In every line, there lives a story waiting <br /> to be discovered</i></b> <br /><span style={{ marginLeft: "180px" }}>— Aria Winters</span> </p>
+
+                </div>
+                <div className='rounded-3xl shake-strong transition-transform duration-300 hover:scale-105 hover:shadow-2xl' style={{ height: "400px", backgroundColor: "#DCE3DC", width: "500px", marginTop: "40px", marginLeft: "20px" }}>
+                  <h1 style={{ fontFamily: "Roboto" }} className='-mt-10 text-3xl text-center font-bold'><br /></h1>
+                  <img style={{ marginLeft: "80px", marginTop: "20px", height: "240px", width: "auto" }} src="https://img.freepik.com/free-photo/flat-lay-travel-concept-with-camera_23-2148666240.jpg?semt=ais_incoming&w=740&q=80" alt="no image" />
+                  <p style={{ fontFamily: "Roboto", marginLeft: "70px", marginTop: "20px" }}><b><i>Creativity grows when you let your mind wander freely</i></b> <br /><span style={{ marginLeft: "160px" }}>— Elio Brooks</span> </p>
+
+                </div>
+              </div>
             </div>
 
 
@@ -112,7 +115,24 @@ function Landing() {
         </section>
         <section>
           <div className='flex flex-col  w-screen '>
-            <h1 style={{marginTop:"10px"}} className='text-4xl text-center'>About</h1>
+            <div className='grid grid-cols-2 '>
+             <div>
+                <h1 style={{ marginTop: "120px", marginLeft: "80px" }} className='text-9xl font-bold  '><i>About us</i></h1>
+                <h4 style={{ marginTop: "120px", marginLeft: "200px" }} className='text-4xl'>Founded in 2023</h4>
+                <p className='text-justify leading-relaxed' style={{marginLeft:"80px",marginTop:"40px",marginBottom:"80px"}} >Welcome to our blog community — a space where real people share real stories.
+    
+                  Here, anyone can express their daily experiences, memorable moments, lessons learned, and the little things that shape their life. From students and creators to successful businessmen, people from every background share their journey, struggles, and victories.
+    
+                  Whether it’s a life-changing story, a business success path, or a simple thought from someone’s day, every post here has the power to inspire.
+                  Our goal is to help readers grow, improve their daily lives, and find motivation through the experiences of others.
+    
+                  This is more than just a blog — it’s a place to learn, connect, and become better every day.
+                </p>
+             </div>
+             <div>
+              <img style={{height:"400px",marginLeft:"40px",marginTop:"298px", width:"auto"}} src="https://i.pinimg.com/736x/f7/25/63/f72563e609873de0a9b8787eb1064421.jpg" alt="no image" />
+             </div>
+            </div>
           </div>
         </section>
       </div>
