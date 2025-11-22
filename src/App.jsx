@@ -4,6 +4,8 @@ import Header from './components/Header'
 import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Sidebar from './pages/Sidebar'
+import Homepage from './pages/Homepage'
+import Profile from './pages/Profile'
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path='/login' element={<Auth/>}/> 
         <Route path='/register' element={<Auth regester />}/>
         <Route path='/sidebar' element={<Sidebar/>} />
+        <Route path='/home' element={<Homepage/>} />
+        <Route path='/profile' element={<Profile/>} />
       </Routes>
    </>
   )

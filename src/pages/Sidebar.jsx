@@ -1,14 +1,33 @@
 import { faCashApp } from '@fortawesome/free-brands-svg-icons'
 import { faCircleUser, faDiamond, faDiamondTurnRight, faEnvelope, faHouse, faStar } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function Sidebar() {
     const [home, sethome] = useState(false)
     const [profile, setprofile] = useState(false)
     const [premium, setpremium] = useState(false)
     const [author, setautor] = useState(false)
+
+    const Nav=useNavigate()
+
+    const handlepage=(page)=>{
+        if(page=="home"){
+            Nav('/home')
+        }else if(page=="profile"){
+            Nav('/profile')
+        }
+
+    }
+    useEffect(()=>{
+        if(location.pathname=='/home'){
+            sethome(true)
+        }else if(location.pathname=='/profile'){
+            setprofile(true)
+        }
+    },[])
     return (
         <>
             <div>
@@ -29,7 +48,7 @@ function Sidebar() {
                                     <FontAwesomeIcon icon={faHouse} />
                                 </div>
 
-                                <h2 style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Home</h2>
+                                <h2 onClick={()=>handlepage("home")} style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Home</h2>
 
                             </div>
                         </div>
@@ -39,7 +58,7 @@ function Sidebar() {
                                     <FontAwesomeIcon icon={faCircleUser} />
                                 </div>
 
-                                <h2 style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Profile</h2>
+                                <h2 onClick={()=>handlepage("profile")} style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Profile</h2>
 
                             </div>
                         </div>
