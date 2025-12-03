@@ -130,7 +130,7 @@ function Landing() {
                 </p>
              </div>
              <div>
-              <img style={{height:"400px",marginLeft:"20px",marginTop:"400px", width:"auto",marginBottom:"10px"}} src="https://i.pinimg.com/736x/f7/25/63/f72563e609873de0a9b8787eb1064421.jpg" alt="no image" />
+              <img style={{height:"400px",marginLeft:"20px",marginTop:"400px", width:"auto",marginBottom:"80px"}} src="https://i.pinimg.com/736x/f7/25/63/f72563e609873de0a9b8787eb1064421.jpg" alt="no image" />
              </div>
             </div>
           </div>

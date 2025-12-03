@@ -18,6 +18,10 @@ function Sidebar() {
             Nav('/home')
         }else if(page=="profile"){
             Nav('/profile')
+        }else if(page=="premiem"){
+            Nav('/premiem')
+        }else if(page=="Topauthor"){
+            Nav('/optionauthor')
         }
 
     }
@@ -26,12 +30,16 @@ function Sidebar() {
             sethome(true)
         }else if(location.pathname=='/profile'){
             setprofile(true)
+        }else if(location.pathname=='/premiem'){
+            setpremium(true)
+        }else if(location.pathname=='/optionauthor'){
+            setautor(true)
         }
     },[])
     return (
         <>
             <div>
-                <div className='rounded-4xl' style={{ height: "680px", backgroundColor: "#EDEFF3", width: "280px ", marginTop: "10px" }}>
+                <div className='rounded-4xl' style={{ height: "700px", backgroundColor: "#EDEFF3", width: "240px ", marginTop: "-10px" }}>
                     <div className='flex  '>
                         <div className='text-2xl' style={{ marginTop: "30px", marginLeft: "30px" }}>
                             <FontAwesomeIcon icon={faDiamondTurnRight} />
@@ -68,7 +76,7 @@ function Sidebar() {
                                     <FontAwesomeIcon icon={faCashApp} />
                                 </div>
 
-                                <h2 style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Premium</h2>
+                                <h2 onClick={()=>handlepage("premiem")} style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Premium</h2>
 
                             </div>
                         </div>
@@ -79,7 +87,7 @@ function Sidebar() {
 
                                 </div>
 
-                                <h2 style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Top Authors</h2>
+                                <h2 onClick={()=>handlepage("Topauthor")} style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto Slab" }}  >Top Authors</h2>
 
                             </div>
                         </div>
@@ -89,11 +97,11 @@ function Sidebar() {
                     <div >
                         
                         <div className='flex' style={{ marginTop: "10px", marginLeft: "0px" }}>
-                            <div className='text-2xl' style={{ marginLeft: "30px" }}>
+                            <div className='text-2xl' style={{ marginLeft: "10px",marginTop:"-6px" }}>
                                 <FontAwesomeIcon icon={faEnvelope} />
                             </div>
 
-                            <h2 style={{ fontSize: "20px", marginTop: "4px", marginLeft: "4px", fontFamily: "Roboto" }}  >Support@gmail.com</h2>
+                            <h2 style={{ fontSize: "20px", marginTop: "-4px", marginLeft: "0px", fontFamily: "Roboto" }}  >Support@gmail.com</h2>
 
                         </div>
                     </div>

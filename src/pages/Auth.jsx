@@ -16,7 +16,7 @@ function Auth({ regester }) {
                        {regester && <input style={{ width: "370px", marginLeft: "200px", height: "40px" }} className='border rounded-3xl' type="text" placeholder=' UserName' />}
                         <input style={{ width: "370px", marginLeft: "200px", height: "40px" }} className='border rounded-3xl' type="password" placeholder=' Password' />
                         <a style={{ marginLeft: "400px", fontFamily: "Intel One Mono" }} className='text-blue-600' href="">Forget Passord ?</a>
-                        {! regester ?<button style={{ marginLeft: "200px", fontFamily: "Intel One Mono", width: "370px", height: "40px" }} className='bg-black text-white rounded-4xl'>Login</button>
+                        {! regester ?<button style={{ marginLeft: "200px", fontFamily: "Intel One Mono", width: "370px", height: "40px" }} className='bg-black text-white rounded-4xl'><Link to={'/home'}>Login</Link></button>
                         :<button style={{ marginLeft: "200px", fontFamily: "Intel One Mono", width: "370px", height: "40px" }} className='bg-blue-600 text-white rounded-4xl'>Register</button>}
                         <p className='text-center'>-------- Or Continue With -------- </p>
                         <div style={{ marginRight: "10px", marginTop: "10px" }} className='flex gap-4 justify-center items-center '>
@@ -38,8 +38,10 @@ function Auth({ regester }) {
 
                 </div>
                 <div>
-                   {!regester && <img style={{height:"700px",width:"auto",}} src="https://img.freepik.com/premium-vector/security-password-concept-illustration_251005-470.jpg" alt="no image" />}
-                   <img style={{height:"500px",width:"auto",marginTop:"120px"}} src="https://static.vecteezy.com/system/resources/previews/010/925/404/non_2x/registration-page-name-and-password-field-fill-in-form-menu-bar-corporate-website-create-account-user-information-flat-design-modern-illustration-vector.jpg" alt="no image" />
+                   {!regester ? <img style={{height:"700px",width:"auto",}} src="https://img.freepik.com/premium-vector/security-password-concept-illustration_251005-470.jpg" alt="no image" />
+                   :
+
+                   <img style={{height:"500px",width:"auto",marginTop:"120px"}} src="https://static.vecteezy.com/system/resources/previews/010/925/404/non_2x/registration-page-name-and-password-field-fill-in-form-menu-bar-corporate-website-create-account-user-information-flat-design-modern-illustration-vector.jpg" alt="no image" />}
                 </div>
 
 
