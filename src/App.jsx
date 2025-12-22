@@ -12,26 +12,30 @@ import Adminpage from './Adminpage'
 import Topauhoroption from './pages/Topauhoroption'
 import Premiemform from './Premiemform'
 import PageNotFound from './pages/PageNotFound'
+import Paymentsucess from './pages/Paymentsucess'
+import Paymentfail from './pages/Paymentfail'
 
 function App() {
   return (
-   <>
-    
+    <>
+
       <Routes>
-        <Route path='/' element={<Landing/>} />
-        <Route path='/login' element={<Auth/>}/> 
-        <Route path='/register' element={<Auth regester />}/>
-        <Route path='/sidebar' element={<Sidebar/>} />
-        <Route path='/home' element={<Homepage/>} />
-        <Route path='/profile' element={<Profile/>} />
-        <Route path='/premiem' element={<Premiem/>} />
-        <Route path='/topauthor' element={<Topauthor/>} />
-        <Route path='/admin' element={<Adminpage/>} />
-        <Route path='/optionauthor' element={<Topauhoroption/>}  />
-        <Route path='/Premiemform' element={<Premiemform/>} />
-        <Route path='*' element={<PageNotFound/>} />
+        <Route path='/' element={<Landing />} />
+        <Route path='/login' element={<Auth />} />
+        <Route path='/register' element={<Auth regester />} />
+        <Route path='/sidebar' element={<Sidebar />} />
+        <Route path='/home' element={<Homepage />} />
+        <Route path='/profile' element={<Profile />} />
+        <Route path='/premiem' element={<Premiem />} />
+        <Route path='/topauthor' element={<Topauthor />} />
+        <Route path='/admin' element={<Adminpage />} />
+        <Route path='/optionauthor' element={<Topauhoroption />} />
+        <Route path='/Premiemform' element={<Premiemform />} />
+        <Route path='/paymentsucess' element={<Paymentsucess/>} />
+        <Route path='/paymentfail' element={<Paymentfail/>} />
+        <Route path='*' element={<PageNotFound />}/>
       </Routes>
-   </>
+    </>
   )
 }
 

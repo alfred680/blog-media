@@ -1,16 +1,299 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header2 from "./Header2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDotCircle, faPenToSquare, faPlus, faTrash, faUpload } from "@fortawesome/free-solid-svg-icons";
+import { faDotCircle, faPenToSquare, faPlus, faTrash, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { toast, ToastContainer } from "react-toastify";
+import { addblogAPI, blogbyuser, deleteblogAPI, edituserprofileAPI, updateblogAPI } from "../server/Allapi";
+import { userProfileContext } from "../context/ContextShare";
 
 function Profile() {
   const [editprofile, seteditprofile] = useState(false);
   const [post, setpost] = useState(true)
   const [open, setopen] = useState(false)
   const [option, setoption] = useState(false)
-  const [uplod,setuplod]=useState(false)
-  const [addpost,setaddpost]=useState(false)
+  const [uplod, setuplod] = useState(false)
+  const [addpost, setaddpost] = useState(false)
+  const [preview, setPreview] = useState('')
+  const [previewList, setPreviewList] = useState([])
+  const [token, setToken] = useState("");
+  const [userBlogs, setUserBlogs] = useState([])
+  const [openMenuIndex, setOpenMenuIndex] = useState(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editData, setEditData] = useState({
+    _id: "",
+    title: "",
+    content: "",
+  });
+  console.log(editData);
+  
+  const toggleReadMores = (index) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
+const openEditModal = (detail) => {
+  setEditData({
+    _id: detail._id,
+    title: detail.title,
+    content: detail.content
+  });
+
+  setIsEditOpen(true);
+};
+
+
+  const { userProfile } = useContext(userProfileContext);
+  console.log(userProfile);
+
+
+  const [expanded, setExpanded] = useState({}); // track expanded state per blog
+
+
+  const toggleReadMore = (index) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [index]: !prev[index], // toggle only this blog
+    }));
+  };
+  const [prof, setprof] = useState({
+
+    username: "",
+    profile: "",
+    bio: null
+
+  })
+  console.log(prof);
+
+
+
+  const [blogDetails, setblogdetails] = useState({
+    title: "",
+    content: "",
+    reportcontent: "",
+    premiem: "",   // optional string
+    payment: "",   // optional string
+    uploadimg: null  // single file
+  });
+
+  console.log(blogDetails);
+
+
+
+
+  // image upload
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    console.log(file);
+
+    setblogdetails(prev => ({
+      ...prev,
+      uploadimg: file
+    }));
+
+    if (previewList.length === 0) {
+      const url = URL.createObjectURL(file);
+      console.log(url);
+
+      setPreview(url);
+      setPreviewList([url]);
+    } else {
+      toast.error('Only 1 image allowed.');
+    }
+  };
+  const handleUploads = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    console.log(file); // just to check the selected file
+
+    setprof((prev) => ({
+      ...prev,
+      profile: file // store the File object in state
+    }));
+
+    // Optional: create preview URL for immediate display
+    setPreview(URL.createObjectURL(file));
+  };
+
+  // add blog
+  const handleSubmit = async () => {
+    const { title, content, uploadimg, reportcontent, premiem, payment } = blogDetails;
+
+    if (!title || !content || !uploadimg) {
+      toast.warning("Please fill the required fields: Title, Content, Image");
+      return;
+    }
+
+    if (!token) {
+      toast.error("You must be logged in to add a blog");
+      return;
+    }
+
+    try {
+      const reqHeader = { Authorization: `Bearer ${token}` };
+      const reqBody = new FormData();
+
+      for (let key in blogDetails) {
+        const value = blogDetails[key];
+        if (value !== "" && value !== null) {
+          // If it's a File (image) include the filename
+          if (value instanceof File) {
+            reqBody.append(key, value, value.name);
+          } else {
+            reqBody.append(key, value);
+          }
+        }
+      }
+
+      const result = await addblogAPI(reqBody, reqHeader);
+      console.log("addblogAPI result:", result);
+
+      if (result && result.status >= 200 && result.status < 300) {
+        toast.success("Blog added");
+
+        // Reset all fields
+        setblogdetails({
+          title: "",
+          content: "",
+          uploadimg: null,
+          reportcontent: "",
+          premiem: "",
+          payment: ""
+        });
+        setPreview("");
+        setPreviewList([]);
+        setaddpost(false);
+
+      } else {
+        const msg = result?.data?.message || "Something went wrong";
+        toast.error(msg);
+      }
+
+    } catch (error) {
+      console.error(error);
+      const msg = error?.response?.data?.message || error?.message || "Something went wrong";
+      toast.error(msg);
+    }
+  };
+
+  // user blog
+  const userBlog = async () => {
+    const reqHeader = {
+      'Authorization': `Bearer ${token}`
+    }
+    const result = await blogbyuser(reqHeader)
+    console.log(result);
+
+    if (result.status == 200) {
+      setUserBlogs(result.data)
+
+    }
+
+  }
+  // edit profile
+  const editprofileuser = async () => {
+    const token = sessionStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login again");
+      return;
+    }
+
+    try {
+      const reqHeader = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "multipart/form-data"
+      };
+
+      const formData = new FormData();
+      formData.append("username", prof.username);
+      formData.append("bio", prof.bio);
+
+      // append only if user selected new image
+      if (prof.profile) {
+        formData.append("profile", prof.profile);
+      }
+
+      const result = await edituserprofileAPI(formData, reqHeader);
+
+      if (result.status === 200) {
+        alert("Profile updated successfully ✅");
+        console.log(result.data);
+
+        setprof(result.data)
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Profile update failed ❌");
+    }
+  }
+
+  // delete blog
+  const deleteblog = async (id) => {
+
+    const result = await deleteblogAPI(id)
+    if (result.status == 200) {
+      toast.success("blog deleted")
+      userBlog()
+
+    } else {
+      toast.error("something went wrong")
+    }
+  }
+
+const updateBlog = async (id) => {
+  try {
+    const reqHeader = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
+
+    const reqBody = {
+      title: editData.title,
+      content: editData.content
+    };
+
+    await updateblogAPI(editData._id, reqHeader, reqBody);
+
+    toast.success("Blog updated");
+    userBlog();         
+    setIsEditOpen(false); 
+
+  } catch (err) {
+    console.log(err);
+    
+    toast.error("Update failed");
+  }
+};
+
+
+
+  useEffect(() => {
+
+    if (sessionStorage.getItem('token')) {
+      const token = sessionStorage.getItem('token')
+      setToken(token)
+    }
+    const Users = JSON.parse(sessionStorage.getItem('exstinguser'))
+    setprof({ username: Users.username, profile: Users.profile, bio: Users.bio })
+
+  }, [userProfile])
+
+  useEffect(() => {
+    if (token) {
+      userBlog()
+    }
+  }, [token])
+
+
+  
+
+
 
 
 
@@ -18,7 +301,7 @@ function Profile() {
   return (
     <>
       <div className=" top-0 w-screen left-0">
-       
+
       </div>
 
 
@@ -29,7 +312,7 @@ function Profile() {
         </div>
 
 
-        <div className="ml-[240px] w-full ">
+        <div className="ml-60 w-full ">
 
 
           <div>
@@ -48,14 +331,17 @@ function Profile() {
 
               <img
                 className="h-[150px] w-[150px] rounded-2xl object-cover border-4 border-white shadow-lg"
-                src="https://static.vecteezy.com/system/resources/thumbnails/005/544/718/small/profile-icon-design-free-vector.jpg"
+                src={preview ||
+                  (prof.profile
+                    ? `http://localhost:4000/upload/${prof.profile}`
+                    : "https://cdn-icons-png.flaticon.com/512/149/149071.png")}
 
                 alt="profile"
               />
 
               <div className="mt-20">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-3xl font-bold">Raji</h1>
+                  <h1 className="text-3xl font-bold">{prof.username}</h1>
                   <span>
                     <img
                       className="h-6"
@@ -65,8 +351,9 @@ function Profile() {
                   </span>
                 </div>
 
+
                 <p className="text-gray-600 mt-2 w-[400px]">
-                  I’m a passionate blogger
+                  {prof.bio}
                 </p>
 
 
@@ -98,8 +385,8 @@ function Profile() {
             </div>
           </div>
           <div className="mt-10 flex">
-            <h1 onClick={() => {setpost(true),setuplod(false) }} style={{ fontFamily: "Roboto" }} className={post ? '  px-70 py-1 font-bold cursor-pointer bg-gray-200 rounded-md transition-all duration-200 shadow-md':'ms-80 font-bold   ' }>Posts</h1>
-            <h1  style={{ fontFamily: "Roboto" }} onClick={() => {setpost(false),setuplod(true) }}  className={uplod ? ' ms-80 px-70 py-1 font-bold cursor-pointer bg-gray-200 rounded-md transition-all duration-200 shadow-md':'ms-80 font-bold   ' }>Uplod</h1>
+            <h1 onClick={() => { setpost(true), setuplod(false) }} style={{ fontFamily: "Roboto" }} className={post ? '  px-70 py-1 font-bold cursor-pointer bg-gray-200 rounded-md transition-all duration-200 shadow-md' : 'ms-80 font-bold   '}>Posts</h1>
+            <h1 style={{ fontFamily: "Roboto" }} onClick={() => { setpost(false), setuplod(true) }} className={uplod ? ' ms-80 px-70 py-1 font-bold cursor-pointer bg-gray-200 rounded-md transition-all duration-200 shadow-md' : 'ms-80 font-bold   '}>Uplod</h1>
 
           </div>
 
@@ -140,6 +427,8 @@ function Profile() {
                       className="text-lg bg-white border rounded-full p-2 shadow hover:bg-blue-200"
                     />
                     <input
+                      onChange={(e) => handleUploads(e)}
+
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -153,6 +442,8 @@ function Profile() {
                   <div>
                     <label className="font-semibold text-gray-700">Name</label>
                     <input
+                      value={prof.username}
+                      onChange={(e) => setprof({ ...prof, username: e.target.value })}
                       className="border mt-1 p-2 w-full rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-300"
                       type="text"
                       placeholder="Enter your name"
@@ -162,12 +453,14 @@ function Profile() {
                   <div>
                     <label className="font-semibold text-gray-700">Bio</label>
                     <textarea
+                      value={prof.bio}
+                      onChange={(e) => setprof({ ...prof, bio: e.target.value })}
                       className="border mt-1 p-2 w-full rounded-lg bg-gray-50 h-[140px] focus:ring-2 focus:ring-blue-300"
                       placeholder="  bio"
                     ></textarea>
                   </div>
 
-                  <button className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                  <button onClick={editprofileuser} className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                     Submit
                   </button>
                 </div>
@@ -175,85 +468,166 @@ function Profile() {
               </div>
             </div>
           )}
-          {option && (
-            <div
-              className="absolute mt-10 ml-136 w-40 bg-white border rounded-xl shadow-lg 
-                     animate-slideDown z-10"
-            >
-              <ul className="py-2 text-gray-700">
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  <div className="flex">
-                    <FontAwesomeIcon className="mt-1" icon={faTrash} />
-                    <p className=" ms-4 font-bold"> Delete</p>
+
+          {post && (
+            <div className="flex flex-wrap">
+              {userBlogs.map((detail, index) => (
+                <div
+                  key={index}
+                  className="relative border rounded-4xl ml-10 mt-10 mb-10 bg-white"
+                  style={{
+                    width: "500px",
+                    height: expanded[index] ? "auto" : "520px",
+                  }}
+                >
+                  {/* Menu Dots */}
+                  <div className="flex flex-col items-end mr-4 mt-3">
+                    {[...Array(3)].map((_, i) => (
+                      <FontAwesomeIcon
+                        key={i}
+                        icon={faDotCircle}
+                        style={{ height: "7px", cursor: "pointer" }}
+                        onClick={() =>
+                          setOpenMenuIndex(
+                            openMenuIndex === index ? null : index
+                          )
+                        }
+                      />
+                    ))}
                   </div>
-                </li>
-                <hr />
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  <div className="flex">
-                    <FontAwesomeIcon className="mt-1" icon={faPenToSquare} />
-                    <p className="ms-4 font-bold" >Edit</p>
+
+                  {/* Blog Content */}
+                  <div className="p-5 overflow-hidden overflow-y-auto">
+                    <img
+                      className="rounded-2xl w-full object-cover"
+                      style={{ height: "200px" }}
+                      src={
+                        detail.uploadimg?.length
+                          ? `http://localhost:4000/upload/${detail.uploadimg[0]}`
+                          : "https://adventure-pulse.com/wp-content/uploads/2025/02/Yunam-Peak-Adventure-Pulse-2.jpg"
+                      }
+                      alt="blog"
+                    />
+
+                    <h1 className="font-bold text-2xl mt-4 ml-10">
+                      {detail.title}
+                    </h1>
+
+                    <p className="text-justify px-10 text-sm mt-5">
+                      {detail.content.split("\n")[0]}
+                    </p>
+
+                    {expanded[index] && (
+                      <p className="text-justify px-10 text-sm mt-5">
+                        {detail.content.split("\n").slice(1).join("\n")}
+                      </p>
+                    )}
+
+                    <p
+                      onClick={() => toggleReadMore(index)}
+                      className="text-blue-400 cursor-pointer text-right mt-3 mr-10"
+                    >
+                      {expanded[index] ? "Show less" : "Read more"}
+                    </p>
                   </div>
 
-                </li>
+                  {/* Delete / Edit Menu */}
+                  {openMenuIndex === index && (
+                    <div className="absolute top-12 right-4 w-40 bg-white border rounded-xl shadow-lg z-10">
+                      <ul className="py-2">
+                        <li
 
-              </ul>
-            </div>)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                          <span onClick={() => deleteblog(detail._id)} className="ml-3 font-bold">Delete</span>
+                        </li>
 
-          {post && <div>
-            <div className=' border rounded-4xl ml-10 mt-10 mb-10' style={{ marginLeft: "", height: open ? "auto" : "420px", width: "500px", marginTop: "" }}>
-              <div className='flex flex-col items-end' style={{ marginRight: "10px", marginTop: "6px" }}>
-                <FontAwesomeIcon onClick={() => setoption(true)} style={{ height: "7px" }} icon={faDotCircle} />
-                <FontAwesomeIcon onClick={() => setoption(true)} style={{ height: "7px" }} icon={faDotCircle} />
-                <FontAwesomeIcon onClick={() => setoption(!option)} style={{ height: "7px" }} icon={faDotCircle} />
-              </div>
-              <div className='flex flex-col items-end' style={{ marginRight: "10px", marginTop: "6px" }}>
+                        <hr />
 
-              </div>
+                        <li
+                        onClick={() => openEditModal(detail)}
 
-              <div className=' overflow-hidden transition-all duration-500   overflow-y-auto p-5'>
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
+                        >
+                          <FontAwesomeIcon icon={faPenToSquare} />
+                          <span className="ml-3 font-bold">Edit</span>
+                        </li>
+                      </ul>
+                      {isEditOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                          <div className="bg-white rounded-xl w-[500px] p-6 relative">
+                            <FontAwesomeIcon
+                              icon={faXmark}
+                              className="absolute top-4 right-4 cursor-pointer"
+                              onClick={() => setIsEditOpen(false)}
+                            />
 
-                <img className='rounded-2xl' style={{ height: "200px", width: "460px", marginLeft: "0px" }} src="https://adventure-pulse.com/wp-content/uploads/2025/02/Yunam-Peak-Adventure-Pulse-2.jpg" alt="no image" />
+                            <h2 className="text-2xl font-bold mb-4">Edit Blog</h2>
 
-                <h1 className='font-bold text-2xl' style={{ marginTop: "10px", marginLeft: "40px" }}>Above the Clouds in Himachal</h1>
-                <p className='text-justify' style={{ paddingLeft: "40px", paddingRight: "40px", fontSize: "12px", marginTop: "20px" }}>On the first day, she realized climbing a mountain wasn’t like walking on a road. Her legs burned, her backpack felt heavier with every step, and her breath came out in small clouds. </p>
-                {open && (
-                  <p className='text-justify' style={{ paddingLeft: "40px", paddingRight: "40px", fontSize: "12px", marginTop: "20px" }} >  “Slow and steady,” he said. “Mountains don’t like rush.”
+                            <input
+                              type="text"
+                              name="title"
+                              value={editData.title}
+                              onChange={(e)=>setEditData({...editData,title:e.target.value})}
 
-                    By the second day, the forest opened into huge meadows. Horses grazed freely, streams danced across rocks, and the air felt cleaner than anything Riya had ever breathed. She started to enjoy the climb.
 
-                    But on the final stretch to the pass, a sudden fog rolled in. The trail disappeared. The wind howled. Riya froze—every horror story she’d ever heard suddenly felt real.
 
-                    Tenzin walked back to her, placed a warm hand on her shoulder, and pointed upward.
-                    “Look. Even in the fog, you can see the way.”
+                              className="w-full border rounded-lg px-3 py-2 mb-4"
+                              placeholder="Title"
+                            />
 
-                    She looked carefully. The rocks had faint white markings left by trekkers before them. Slowly, step by step, she followed the marks until the ground suddenly leveled.
+                            <textarea
+                              name="content"
+                              value={editData.content}
+                              onChange={(e)=>setEditData({...editData,content:e.target.value})}
+                              
 
-                    They had reached Hampta Pass.
+                              rows={6}
+                              className="w-full border rounded-lg px-3 py-2"
+                              placeholder="Content"
+                            />
 
-                    When the fog parted, she gasped. Peaks rose in every direction, sharp and silent, floating above a blanket of clouds. She felt tiny—yet stronger than ever.
+                            <div className="flex justify-end mt-4 gap-3">
+                              <button
+                                onClick={() => setIsEditOpen(false)}
+                                className="px-4 py-2 border rounded-lg"
+                              >
+                                Cancel
+                              </button>
 
-                    Tenzin smiled. “Your first pass. How does it feel?”
+                              <button
+                              onClick={updateBlog}
 
-                    Riya closed her eyes, letting the cold wind hit her face.
-                    “Like I finally met a version of myself I didn’t know existed.”
-
-                    The climb had been hard. But the mountain had given her something no city ever could—a sense of how powerful she truly was.
-                  </p>
-                )}
-                <p onClick={() => setopen(!open)} className='text-blue-400 hover:text-green-400' style={{ marginLeft: "360px" }}>{open ? "Show less" : "Read more"}</p>
-
-              </div>
-
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>}
-         {uplod && <div>
+          )}
 
-          <div className="ms-10 ">
-           <img onClick={()=>setaddpost(true)} className="mt-10 ms-120" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4y4mHujo5wQCxYw-kEua3Aw9Dli5CRsBeGmRR4ca3t0TrLoH4i--6nT-e5D5vaToflHc&usqp=CAU" alt="no image" />
-          </div>
+          {/* EDIT MODAL */}
+
+
+
+
+
+          {uplod && <div>
+
+            <div className="ms-10 ">
+              <img onClick={() => setaddpost(true)} className="mt-10 ms-120" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4y4mHujo5wQCxYw-kEua3Aw9Dli5CRsBeGmRR4ca3t0TrLoH4i--6nT-e5D5vaToflHc&usqp=CAU" alt="no image" />
+            </div>
 
           </div>}
-          {addpost  && (
+          {addpost && (
             <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
               <div className="w-[350px] h-[540px] bg-white shadow-xl rounded-2xl p-6 relative animate-[fadeIn_0.3s_ease]">
 
@@ -264,7 +638,7 @@ function Profile() {
                 >
                   ×
                 </button>
-                
+
 
 
 
@@ -273,6 +647,8 @@ function Profile() {
                   <div>
                     <label className="font-semibold text-gray-700">Title</label>
                     <input
+                      value={blogDetails.title}
+                      onChange={(e) => setblogdetails({ ...blogDetails, title: e.target.value })}
                       className="border mt-1 p-2 w-full rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-300"
                       type="text"
                       placeholder=" title"
@@ -282,19 +658,21 @@ function Profile() {
                   <div>
                     <label className="font-semibold text-gray-700">Content</label>
                     <textarea
+                      value={blogDetails.content}
+                      onChange={(e) => setblogdetails({ ...blogDetails, content: e.target.value })}
                       className="border mt-1 p-2 w-full rounded-lg bg-gray-50 h-[140px] focus:ring-2 focus:ring-blue-300"
                       placeholder="  write your blog"
                     ></textarea>
                   </div>
                   <div className="text-gray-400 mb-4 text-center">
-                 <label>
-                    <FontAwesomeIcon icon={faUpload} className="text-3xl mb-2" />
-                    <input className="ml-6" type="file" />
-                     
-                 </label>
-                     </div>
+                    <label>
+                      <FontAwesomeIcon icon={faUpload} className="text-3xl mb-2" />
+                      <input onChange={(e) => handleUpload(e)} className="ml-6" type="file" />
 
-                  <button className="bg-blue-600 text-white py-2 mt-2 rounded-lg hover:bg-blue-700">
+                    </label>
+                  </div>
+
+                  <button onClick={handleSubmit} className="bg-blue-600 text-white py-2 mt-2 rounded-lg hover:bg-blue-700">
                     Submit
                   </button>
                 </div>
@@ -306,7 +684,8 @@ function Profile() {
 
 
         </div>
-      </div>
+        <ToastContainer position='top-center' />
+      </div >
     </>
   );
 }

@@ -21,7 +21,7 @@ function Sidebar() {
         }else if(page=="premiem"){
             Nav('/premiem')
         }else if(page=="Topauthor"){
-            Nav('/optionauthor')
+            Nav('/topauthor')
         }
 
     }
@@ -32,7 +32,7 @@ function Sidebar() {
             setprofile(true)
         }else if(location.pathname=='/premiem'){
             setpremium(true)
-        }else if(location.pathname=='/optionauthor'){
+        }else if(location.pathname=='/topauthor'){
             setautor(true)
         }
     },[])
