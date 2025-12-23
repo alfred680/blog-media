@@ -3,11 +3,14 @@ import Sidebar from './Sidebar'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleExclamation, faDotCircle } from '@fortawesome/free-solid-svg-icons'
 import Header2 from './Header2'
-import { allblogAPI } from '../server/Allapi'
+import { allblogAPI, reportblogAPI } from '../server/Allapi'
+import { toast } from 'react-toastify'
 
 function Homepage() {
     const [open, setopen] = useState(false)
     const [option, setoption] = useState(false)
+    const [reportReason, setReportReason] = useState("");
+
 
     const [allBlog, setAllBlog] = useState([])
 
@@ -25,7 +28,7 @@ function Homepage() {
     const [token, setToken] = useState('')
     console.log(token);
 
-// get all blogs
+    // get all blogs
     const allblog = async (searchKey, token) => {
 
         const reqHeader = {
@@ -38,6 +41,35 @@ function Homepage() {
 
 
     }
+
+    const submitReport = async () => {
+        if (!reportReason) {
+            alert("Please enter a reason for reporting");
+
+            return;
+        }
+
+        const token = sessionStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const blogId = allBlog[reportOpen]?._id; // get the current blog's id
+
+        try {
+            const res = await reportblogAPI(headers, blogId, { reason: reportReason });
+            if (res?.status === 201) {
+               alert("Reporting successfull")
+            } else {
+                alert(res.response?.data || "Failed to submit report");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong");
+        }
+
+        // Close modal and reset
+        setReportOpen(null);
+        setReportReason("");
+    };
     useEffect(() => {
         const t = sessionStorage.getItem('token')
         setToken(t)
@@ -62,7 +94,7 @@ function Homepage() {
                     <div>
                         <div className="flex flex-wrap ml-70 ">
                             {allBlog.map((item, index) => (
-                                <div key={index} className="relative bg-white border rounded-4xl mb-10 ml-20  mt-6" style={{ width: "460px",height: expanded[index] ? "auto" : "520px" }}>
+                                <div key={index} className="relative bg-white border rounded-4xl mb-10 ml-20  mt-6" style={{ width: "460px", height: expanded[index] ? "auto" : "520px" }}>
 
                                     {/* Menu Dots */}
                                     <div className="flex flex-col items-end mt-4 mr-4">
@@ -130,6 +162,8 @@ function Homepage() {
                             <h2 className='text-xl font-bold text-center mb-4'>Report Content</h2>
 
                             <textarea
+                                value={reportReason}
+                                onChange={(e) => setReportReason(e.target.value)}
 
                                 placeholder="Write your report..."
                                 className='w-full h-32 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-red-400'
@@ -145,7 +179,7 @@ function Homepage() {
 
                                 <button
                                     className='bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600'
-                                    onClick={() => setReportOpen(false)}
+                                    onClick={submitReport}
                                 >
                                     Submit
                                 </button>

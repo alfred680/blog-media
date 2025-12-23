@@ -245,7 +245,7 @@ const openEditModal = (detail) => {
       toast.error("something went wrong")
     }
   }
-
+// update blog
 const updateBlog = async (id) => {
   try {
     const reqHeader = {

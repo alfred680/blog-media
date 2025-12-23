@@ -5,6 +5,12 @@ import React, { useState } from 'react'
 function Header2() {
 
   const [open, setOpen] = useState(false)
+  const handleLogout = () => {
+  sessionStorage.removeItem("token"); 
+  sessionStorage.removeItem("exstinguser");    
+  window.location.href = "/login";     
+};
+
 
   return (
     <header className="bg-[#4D4A4A] shadow-sm  rounded-4xl mr-2   ml-60">
@@ -42,7 +48,7 @@ function Header2() {
                 className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 cursor-pointer"
               >
                 <FontAwesomeIcon  icon={faRightToBracket} />
-                <span className="font-medium">Logout</span>
+                <span onClick={handleLogout} className="font-medium">Logout</span>
               </div>
 
             </div>

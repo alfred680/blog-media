@@ -1,13 +1,18 @@
 import { faDotCircle, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import AdminHeader from './AdminHeader';
+import { allblogadminAPI, deleteadminblogAPI, reportgetAPI } from './server/Allapi';
 
 function Adminpage() {
     const [allblogs, setallblog] = useState(true)
     const [request, setrequest] = useState(false)
     const [subscrition, setsubscrition] = useState(false)
-     const [openMenuIndex, setOpenMenuIndex] = useState(null)
+    const [openMenuIndex, setOpenMenuIndex] = useState(null)
+    const [openIndex, setOpenIndex] = useState(null);
+    const [menuIndex, setMenuIndex] = useState(null);
+
+    const [allBlogs, setAllBlogs] = useState([]);
 
     const [open, setopen] = useState(false)
     const [option, setoption] = useState(false)
@@ -18,6 +23,78 @@ function Adminpage() {
             [index]: !prev[index], // toggle only this blog
         }));
     };
+    console.log(allBlogs);
+
+    const [reports, setReports] = useState([]);
+    console.log(reports);
+
+    // delete blog
+    const handleDelete = async (blogId) => {
+        const token = sessionStorage.getItem("token");
+        const reqHeader = { Authorization: `Bearer ${token}` };
+
+        try {
+            const res = await deleteadminblogAPI(reqHeader, blogId);
+
+            if (res.status === 200) {
+                alert("Blog deleted successfully");
+
+                // Remove deleted blog from the reports state
+                setReports((prev) => prev.filter((r) => r.blogId?._id !== blogId));
+            } else {
+                alert("Failed to delete blog");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("Error deleting blog");
+        }
+    };
+
+
+    useEffect(() => {
+        const fetchBlogs = async () => {
+            const token = sessionStorage.getItem("token");
+            const reqHeader = { Authorization: `Bearer ${token}` };
+
+            try {
+                const res = await allblogadminAPI(reqHeader);
+                setAllBlogs(res.data);
+            } catch (err) {
+                console.error("Error fetching blogs:", err);
+            }
+        };
+
+        fetchBlogs();
+
+    }, []);
+
+
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            const token = sessionStorage.getItem("token");
+
+            if (!token) return;
+
+            const reqHeader = {
+                Authorization: `Bearer ${token}`
+            };
+
+            try {
+                const res = await reportgetAPI(reqHeader);
+
+                if (res.status === 200) {
+                    setReports(res.data);
+                }
+            } catch (err) {
+                console.log(err);
+
+            }
+        };
+
+        fetchReports();
+    }, []);
+
     return (
         <div>
             <AdminHeader />
@@ -50,96 +127,98 @@ function Adminpage() {
                 <div className='flex gap-18 justify-center font-bold bg-white p-5 mb-10' style={{ fontFamily: "Playfair Display", marginTop: "-30px" }}>
                     <h1 onClick={() => { setallblog(true), setrequest(false), setsubscrition(false) }} className={allblogs ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : "rounded-4xl border p-2 px-4"} >All Blogs</h1>
                     <h1 onClick={() => { setallblog(false), setrequest(true), setsubscrition(false) }} className={request ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'} >Request</h1>
-                    <h1 onClick={() => { setallblog(false), setrequest(false), setsubscrition(true) }} className={subscrition ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'}  >Subscription</h1>
+                    <h1 onClick={() => { setallblog(false), setrequest(false), setsubscrition(true) }} className={subscrition ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'}  >Analyse</h1>
 
 
 
                 </div>
-                {option && (
+                {allblogs && (
                     <div className="flex flex-wrap">
-                        {/* {userBlogs.map((detail, index) => ( */}
-                        <div
-                            key={index}
-                            className="relative border rounded-4xl ml-10 mt-10 mb-10 bg-white"
-                            style={{
-                                width: "500px",
-                                height: expanded[index] ? "auto" : "520px",
-                            }}
-                        >
-                            {/* Menu Dots */}
-                            <div className="flex flex-col items-end mr-4 mt-3">
-                                {[...Array(3)].map((_, i) => (
-                                    <FontAwesomeIcon
-                                        key={i}
-                                        icon={faDotCircle}
-                                        style={{ height: "7px", cursor: "pointer" }}
-                                        onClick={() =>
-                                            setOpenMenuIndex(
-                                                openMenuIndex === index ? null : index
-                                            )
-                                        }
-                                    />
-                                ))}
-                            </div>
+                        {allBlogs.map((blog, index) => (
+                            <div
+                                key={blog._id}
+                                className="border rounded-4xl ml-10 mt-10 mb-10 bg-white relative"
+                                style={{
+                                    height: openIndex === index ? "auto" : "520px",
+                                    width: "500px",
+                                }}
+                            >
+                                {/* Menu dots */}
+                                <div
+                                    className="flex flex-col items-end mr-3 mt-2 cursor-pointer"
+                                    onClick={() =>
+                                        setMenuIndex(menuIndex === index ? null : index)
+                                    }
+                                >
+                                    {[...Array(3)].map((_, i) => (
+                                        <FontAwesomeIcon
+                                            key={i}
+                                            icon={faDotCircle}
+                                            style={{ height: "7px" }}
+                                        />
+                                    ))}
+                                </div>
 
-                            {/* Blog Content */}
-                            <div className="p-5 overflow-hidden overflow-y-auto">
-                                <img
-                                    className="rounded-2xl w-full object-cover"
-                                    style={{ height: "200px" }}
-                                    src=""
-                                    alt="blog"
-                                />
-
-                                <h1 className="font-bold text-2xl mt-4 ml-10">
-                                    iurehi
-                                </h1>
-
-                                <p className="text-justify px-10 text-sm mt-5">
-                                    {/* {detail.content.split("\n")[0]} */}
-                                </p>
-
-                                {expanded[index] && (
-                                    <p className="text-justify px-10 text-sm mt-5">
-                                        {/* {detail.content.split("\n").slice(1).join("\n")} */}
-                                    </p>
+                                {/* Dropdown menu */}
+                                {menuIndex === index && (
+                                    <div className="absolute top-10 right-4 bg-white border rounded-xl shadow-md z-10">
+                                        <ul className="py-2">
+                                            <li
+                                                className="px-4 py-1 hover:bg-gray-100 cursor-pointer flex"
+                                                onClick={() => handleDelete(blog._id)}
+                                            >
+                                                <FontAwesomeIcon className='mt-1' icon={faTrash} />
+                                                <span className="ml-3 font-bold">Delete</span>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 )}
 
-                                <p
-                                    onClick={() => toggleReadMore(index)}
-                                    className="text-blue-400 cursor-pointer text-right mt-3 mr-10"
-                                >
-                                    {expanded[index] ? "Show less" : "Read more"}
-                                </p>
-                            </div>
+                                {/* Blog content */}
+                                <div className="p-5 overflow-y-auto">
+                                    <img
+                                        className="rounded-2xl w-full"
+                                        style={{ height: "200px" }}
+                                        src={
+                                            blog.uploadimg && blog.uploadimg.length > 0
+                                                ? `http://localhost:4000/upload/${blog.uploadimg[0]}`
+                                                : "https://via.placeholder.com/200"
+                                        }
+                                        alt="blog"
+                                    />
 
-                            {/* Delete / Edit Menu */}
-                            {openMenuIndex === index && (
-                                <div className="absolute top-12 right-4 w-40 bg-white border rounded-xl shadow-lg z-10">
-                                    <ul className="py-2">
-                                        <li
+                                    <h1 className="font-bold text-2xl mt-4 ml-10">
+                                        {blog.title}
+                                    </h1>
 
-                                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
-                                        >
-                                            <FontAwesomeIcon icon={faTrash} />
-                                            <span className="ml-3 font-bold">Delete</span>
-                                        </li>
+                                    <p className="text-justify px-10 text-sm mt-5">
+                                        {blog.content?.slice(0, 150)}...
+                                    </p>
 
-                                        <hr />
+                                    {openIndex === index && (
+                                        <p className="text-justify px-10 text-sm mt-5">
+                                            {blog.content}
+                                        </p>
+                                    )}
 
-
-                                    </ul>
-
+                                    <p
+                                        onClick={() =>
+                                            setOpenIndex(openIndex === index ? null : index)
+                                        }
+                                        className="text-blue-400 cursor-pointer text-right mr-10"
+                                    >
+                                        {openIndex === index ? "Show less" : "Read more"}
+                                    </p>
                                 </div>
-                            )}
-                        </div>
-                        {/* ))} */}
+                            </div>
+                        ))}
+
                     </div>
                 )}
 
 
                 <div className=''>
-                    {option && (
+                    {/* {option && (
                         <div
                             className="absolute mt-10 ml-136 w-40 bg-white border rounded-xl shadow-lg 
                          animate-slideDown z-10"
@@ -161,54 +240,98 @@ function Adminpage() {
                                 </li>
 
                             </ul>
-                        </div>)}
+                        </div>)} */}
 
-                    {request && <div>
-                        <div className=' border rounded-4xl ml-10 mt-10 mb-10' style={{ marginLeft: "", height: open ? "auto" : "420px", width: "500px", marginTop: "" }}>
-                            <div className='flex flex-col items-end' style={{ marginRight: "10px", marginTop: "6px" }}>
-                                <FontAwesomeIcon onClick={() => setoption(true)} style={{ height: "7px" }} icon={faDotCircle} />
-                                <FontAwesomeIcon onClick={() => setoption(true)} style={{ height: "7px" }} icon={faDotCircle} />
-                                <FontAwesomeIcon onClick={() => setoption(!option)} style={{ height: "7px" }} icon={faDotCircle} />
-                            </div>
-                            <div className='flex flex-col items-end' style={{ marginRight: "10px", marginTop: "6px" }}>
+                    {request && <div className='flex flex-wrap'>
+                        {reports.map((da, index) => (
+                            <div
+                                key={da._id}
+                                className="border rounded-4xl ml-10 mt-10 mb-10 bg-white relative"
+                                style={{
+                                    height: openIndex === index ? "auto" : "520px",
+                                    width: "500px",
+                                }}
+                            >
+                                {/* Menu dots */}
+                                <div className="flex flex-col items-end mr-3 mt-2">
+                                    {[...Array(3)].map((_, i) => (
+                                        <FontAwesomeIcon
+                                            key={i}
+                                            icon={faDotCircle}
+                                            style={{ height: "7px", cursor: "pointer" }}
+                                            onClick={() =>
+                                                setMenuIndex(menuIndex === index ? null : index)
+                                            }
+                                        />
+                                    ))}
+                                </div>
 
-                            </div>
+                                {/* Dropdown menu */}
+                                {menuIndex === index && (
+                                    <div className="absolute top-10 right-4 bg-white border rounded-xl shadow-md z-10">
+                                        <ul className="py-2">
+                                            <li
 
-                            <div className=' overflow-hidden transition-all duration-500   overflow-y-auto p-5'>
+                                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                                <span onClick={() => handleDelete(da.blogId._id)} className="ml-3 font-bold">Delete</span>
+                                            </li>
 
-                                <img className='rounded-2xl' style={{ height: "200px", width: "460px", marginLeft: "0px" }} src="https://adventure-pulse.com/wp-content/uploads/2025/02/Yunam-Peak-Adventure-Pulse-2.jpg" alt="no image" />
 
-                                <h1 className='font-bold text-2xl' style={{ marginTop: "10px", marginLeft: "40px" }}>Above the Clouds in Himachal</h1>
-                                <p className='text-justify' style={{ paddingLeft: "40px", paddingRight: "40px", fontSize: "12px", marginTop: "20px" }}>On the first day, she realized climbing a mountain wasn’t like walking on a road. Her legs burned, her backpack felt heavier with every step, and her breath came out in small clouds. </p>
-                                {open && (
-                                    <p className='text-justify' style={{ paddingLeft: "40px", paddingRight: "40px", fontSize: "12px", marginTop: "20px" }} >  “Slow and steady,” he said. “Mountains don’t like rush.”
-
-                                        By the second day, the forest opened into huge meadows. Horses grazed freely, streams danced across rocks, and the air felt cleaner than anything Riya had ever breathed. She started to enjoy the climb.
-
-                                        But on the final stretch to the pass, a sudden fog rolled in. The trail disappeared. The wind howled. Riya froze—every horror story she’d ever heard suddenly felt real.
-
-                                        Tenzin walked back to her, placed a warm hand on her shoulder, and pointed upward.
-                                        “Look. Even in the fog, you can see the way.”
-
-                                        She looked carefully. The rocks had faint white markings left by trekkers before them. Slowly, step by step, she followed the marks until the ground suddenly leveled.
-
-                                        They had reached Hampta Pass.
-
-                                        When the fog parted, she gasped. Peaks rose in every direction, sharp and silent, floating above a blanket of clouds. She felt tiny—yet stronger than ever.
-
-                                        Tenzin smiled. “Your first pass. How does it feel?”
-
-                                        Riya closed her eyes, letting the cold wind hit her face.
-                                        “Like I finally met a version of myself I didn’t know existed.”
-
-                                        The climb had been hard. But the mountain had given her something no city ever could—a sense of how powerful she truly was.
-                                    </p>
+                                        </ul>
+                                    </div>
                                 )}
-                                <p onClick={() => setopen(!open)} className='text-blue-400 hover:text-green-400' style={{ marginLeft: "360px" }}>{open ? "Show less" : "Read more"}</p>
 
+                                {/* Blog content */}
+                                <div className="p-5 overflow-y-auto">
+                                    <img
+                                        className="rounded-2xl w-full"
+                                        style={{ height: "200px" }}
+                                        src={
+                                            da.blogId?.uploadimg && da.blogId.uploadimg.length > 0
+                                                ? `http://localhost:4000/upload/${da.blogId.uploadimg[0]}`
+                                                : "https://via.placeholder.com/200" // fallback image
+                                        }
+                                        alt="blog"
+                                    />
+
+
+                                    <h1 className="font-bold text-2xl mt-4 ml-10">
+                                        {da.blogId?.title}
+                                    </h1>
+
+                                    <p className="text-justify px-10 text-sm mt-5">
+                                        {da.blogId?.content?.slice(0, 150)}...
+                                    </p>
+
+                                    {openIndex === index && (
+                                        <p className="text-justify px-10 text-sm mt-5">
+                                            {da.blogId?.content}
+                                        </p>
+                                    )}
+
+                                    <p
+                                        onClick={() =>
+                                            setOpenIndex(openIndex === index ? null : index)
+                                        }
+                                        className="text-blue-400 cursor-pointer text-right mr-10"
+                                    >
+                                        {openIndex === index ? "Show less" : "Read more"}
+                                    </p>
+
+                                    {/* Report reason */}
+                                    <div className="mt-4 px-10 text-red-500 text-sm">
+                                        <b>Reason:</b> {da.reason}
+                                    </div>
+
+                                    <div className="px-10 text-gray-500 text-xs">
+                                        Reported by: {da.reportedBy}
+                                    </div>
+                                </div>
                             </div>
+                        ))}
 
-                        </div>
                     </div>}
 
 
