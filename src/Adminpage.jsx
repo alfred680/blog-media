@@ -337,25 +337,7 @@ function Adminpage() {
 
                 </div>
                 {subscrition && <div>
-                    <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden" >
-                        <thead className="bg-gray-200 ">
-                            <tr >
-                                <th className="px-4 py-2 text-left font-bold ">Name</th>
-                                <th className="px-4 py-2 text-left font-bold">plan</th>
-                                <th className="px-4 py-2 text-left font-bold">Date</th>
-                                <th className="px-4 py-2 text-left font-bold">Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="border-t">
-                                <th className="px-4 py-2 mr-20 font-bold text-left" >Mark</th>
-                                <td className="px-4 py-2 font-bold">Standard</td>
-                                <td className="px-4 py-2 font-bold">21/5/26</td>
-                                <td className="px-4 py-2 font-bold"> $ 700</td>
-                            </tr>
-
-                        </tbody>
-                    </table>
+                    
                 </div>}
             </div>
         </div>

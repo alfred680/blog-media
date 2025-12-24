@@ -153,7 +153,11 @@ function Topauthor() {
                             <p className="mt-10 text-gray-600">
                                 This content is available for premium users only.
                             </p>
+                            <div className='mt-40'>
+                              <h1>  NB: IF YOU BUY PREMIUM  PLEASE LOGIN ONE MORE TIME </h1>
+                            </div>
                         </div>
+                        
                     )}
                 </div>
 
