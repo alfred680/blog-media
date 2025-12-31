@@ -2,10 +2,11 @@ import React, { useContext, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header2 from "./Header2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDotCircle, faPenToSquare, faPlus, faTrash, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faComment, faDotCircle, faPenToSquare, faPlus, faTrash, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { toast, ToastContainer } from "react-toastify";
 import { addblogAPI, blogbyuser, deleteblogAPI, edituserprofileAPI, updateblogAPI } from "../server/Allapi";
 import { userProfileContext } from "../context/ContextShare";
+import { FaEllipsisH, FaSmile } from "react-icons/fa";
 
 function Profile() {
   const [editprofile, seteditprofile] = useState(false);
@@ -20,13 +21,17 @@ function Profile() {
   const [userBlogs, setUserBlogs] = useState([])
   const [openMenuIndex, setOpenMenuIndex] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [comment, setComment] = useState("");
+      const [reply, setReply] = useState("");
+   const [commentbox, setCommentbox] = useState(false)
+      const [replayopen, setReplyopen] = useState(false)
   const [editData, setEditData] = useState({
     _id: "",
     title: "",
     content: "",
   });
   console.log(editData);
-  
+
   const toggleReadMores = (index) => {
     setExpanded((prev) => ({
       ...prev,
@@ -34,15 +39,15 @@ function Profile() {
     }));
   };
 
-const openEditModal = (detail) => {
-  setEditData({
-    _id: detail._id,
-    title: detail.title,
-    content: detail.content
-  });
+  const openEditModal = (detail) => {
+    setEditData({
+      _id: detail._id,
+      title: detail.title,
+      content: detail.content
+    });
 
-  setIsEditOpen(true);
-};
+    setIsEditOpen(true);
+  };
 
 
   const { userProfile } = useContext(userProfileContext);
@@ -245,31 +250,31 @@ const openEditModal = (detail) => {
       toast.error("something went wrong")
     }
   }
-// update blog
-const updateBlog = async (id) => {
-  try {
-    const reqHeader = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    };
+  // update blog
+  const updateBlog = async (id) => {
+    try {
+      const reqHeader = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
 
-    const reqBody = {
-      title: editData.title,
-      content: editData.content
-    };
+      const reqBody = {
+        title: editData.title,
+        content: editData.content
+      };
 
-    await updateblogAPI(editData._id, reqHeader, reqBody);
+      await updateblogAPI(editData._id, reqHeader, reqBody);
 
-    toast.success("Blog updated");
-    userBlog();         
-    setIsEditOpen(false); 
+      toast.success("Blog updated");
+      userBlog();
+      setIsEditOpen(false);
 
-  } catch (err) {
-    console.log(err);
-    
-    toast.error("Update failed");
-  }
-};
+    } catch (err) {
+      console.log(err);
+
+      toast.error("Update failed");
+    }
+  };
 
 
 
@@ -291,7 +296,7 @@ const updateBlog = async (id) => {
   }, [token])
 
 
-  
+
 
 
 
@@ -546,12 +551,21 @@ const updateBlog = async (id) => {
                         <hr />
 
                         <li
-                        onClick={() => openEditModal(detail)}
+                          onClick={() => openEditModal(detail)}
 
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
                         >
                           <FontAwesomeIcon icon={faPenToSquare} />
                           <span className="ml-3 font-bold">Edit</span>
+                        </li>
+                        <hr />
+                        <li
+                          onClick={() => setCommentbox(detail)}
+
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
+                        >
+                          <FontAwesomeIcon icon={faComment} />
+                          <span className="ml-3 font-bold">Comments</span>
                         </li>
                       </ul>
                       {isEditOpen && (
@@ -569,7 +583,7 @@ const updateBlog = async (id) => {
                               type="text"
                               name="title"
                               value={editData.title}
-                              onChange={(e)=>setEditData({...editData,title:e.target.value})}
+                              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
 
 
 
@@ -580,8 +594,8 @@ const updateBlog = async (id) => {
                             <textarea
                               name="content"
                               value={editData.content}
-                              onChange={(e)=>setEditData({...editData,content:e.target.value})}
-                              
+                              onChange={(e) => setEditData({ ...editData, content: e.target.value })}
+
 
                               rows={6}
                               className="w-full border rounded-lg px-3 py-2"
@@ -597,7 +611,7 @@ const updateBlog = async (id) => {
                               </button>
 
                               <button
-                              onClick={updateBlog}
+                                onClick={updateBlog}
 
                                 className="px-4 py-2 bg-blue-500 text-white rounded-lg"
                               >
@@ -680,6 +694,94 @@ const updateBlog = async (id) => {
               </div>
             </div>
           )}
+          {commentbox && <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
+            <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-4 relative">
+
+              {/* Header */}
+              <div className="flex justify-between items-center border-b pb-2">
+                <h2 className="text-lg font-semibold">Comments</h2>
+                <button onClick={() => setCommentbox(false)} className="text-gray-500 text-xl">×</button>
+              </div>
+              {option && <div className='ml-140 bg-white border w-25 '>
+                <button className=' ml-2 '><b>delete</b></button>
+                <hr />
+                <button className=' ml-4'><b>edit</b></button>
+              </div>}
+
+              {/* Comment */}
+              <div className="flex gap-3 mt-4">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
+                  A
+                </div>
+
+
+                {/* Content */}
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">Liam Rubicorn</h4>
+
+                    </div>
+                    <FaEllipsisH onClick={() => setoption(prev => !prev)} className="text-gray-400 cursor-pointer" />
+                  </div>
+
+                  <p className="mt-2 text-gray-700">
+                    A better understanding of usage can aid in prioritizing future
+                    efforts i'm sorry I replied to your emails after only three weeks
+                  </p>
+
+                  {/* Reply button */}
+                  <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+                    <button onClick={() => setReplyopen(true)} className="font-medium hover:text-purple-600">
+                      REPLY
+                    </button>
+
+                  </div>
+
+                  {/* Reply input */}
+                  {replayopen && <div className="relative mt-3">
+                    <input
+                      type="text"
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                      placeholder="Enter your comment"
+                      className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
+                    />
+                    <div className="absolute right-3 top-2.5 flex items-center gap-2">
+                      <FaSmile className="text-gray-400 cursor-pointer" />
+                      <button className="bg-purple-600 text-white px-3 py-1 rounded-md text-sm">
+                        Send
+                      </button>
+                    </div>
+                  </div>}
+                </div>
+              </div>
+
+              {/* New Comment Input */}
+              <div className="relative mt-6">
+                <input
+                  type="text"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Enter your comment"
+                  className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
+                />
+                <div className="absolute right-3 top-2.5 flex items-center gap-2">
+                  <FaSmile className="text-gray-400 cursor-pointer" />
+                  <button
+                    disabled={!comment}
+                    className={`px-3 py-1 rounded-md text-sm ${comment
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }`}
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>}
 
 
 

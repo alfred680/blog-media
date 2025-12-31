@@ -14,6 +14,7 @@ import Premiemform from './Premiemform'
 import PageNotFound from './pages/PageNotFound'
 import Paymentsucess from './pages/Paymentsucess'
 import Paymentfail from './pages/Paymentfail'
+import Inbox from './pages/Inbox'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path='/Premiemform' element={<Premiemform />} />
         <Route path='/paymentsucess' element={<Paymentsucess/>} />
         <Route path='/paymentfail' element={<Paymentfail/>} />
+        <Route path='/inbox' element={<Inbox/>} />
         <Route path='*' element={<PageNotFound />}/>
       </Routes>
     </>
