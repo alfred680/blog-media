@@ -58,17 +58,100 @@ export const reportblogAPI = async (reqHeader, blogId, reqBody) => {
 
 
 // get report blog
-export const reportgetAPI=async(reqHeader)=>{
-    return await commonApi("get",`${serverURL}/reportblog`,"",reqHeader)
+export const reportgetAPI = async (reqHeader) => {
+    return await commonApi("get", `${serverURL}/reportblog`, "", reqHeader)
 }
 // delete reported
-export const deleteadminblogAPI=async(reqHeader,blogId)=>{
-    return await commonApi("delete",`${serverURL}/admindelete/${blogId}`,"",reqHeader)
+export const deleteadminblogAPI = async (reqHeader, blogId) => {
+    return await commonApi("delete", `${serverURL}/admindelete/${blogId}`, "", reqHeader)
+}
+
+
+// alladminblog
+export const allblogadminAPI = async (reqHeader) => {
+    return await commonApi("get", `${serverURL}/admin-allblog`, "", reqHeader)
+
+}
+
+export const followUserAPI = async (userId, reqHeader) => {
+    return await commonApi("put", `${serverURL}/follow/${userId}`, {}, reqHeader)
+}
+export const sendMessageAPI = async (messageBody, reqHeader) => {
+  // messageBody should contain { receiverId, message, optional blogId }
+  return await commonApi("post", `${serverURL}/message`, messageBody, reqHeader);
+};
+
+
+export const receiveringallmessagesAPI = async (receiverId, reqHeader) => {
+    return await commonApi("get", `${serverURL}/messages/${receiverId}`, {}, reqHeader);
+};
+
+
+
+export const getReceiverAPI = async (blogId, reqHeader) => {
+    return await commonApi("get", `${serverURL}/blogs/${blogId}/receiver`, {}, reqHeader);
+};
+
+export const searchUsersAPI = async (q, reqHeader) => {
+  return await commonApi("get", `${serverURL}/users/search?q=${encodeURIComponent(q)}`, {}, reqHeader);
+};
+
+// Conversations
+export const getConversationsAPI = async (reqHeader) => {
+  return await commonApi("get", `${serverURL}/conversations`, {}, reqHeader);
+};
+
+export const getConversationMessagesAPI = async (conversationId, reqHeader) => {
+  return await commonApi("get", `${serverURL}/conversations/${conversationId}/messages`, {}, reqHeader);
+};
+
+export const createConversationAPI = async (blogId, reqHeader) => {
+  return await commonApi("post", `${serverURL}/conversations`, { blogId }, reqHeader);
+};
+
+export const deleteConversationAPI = async (conversationId, reqHeader) => {
+  return await commonApi("delete", `${serverURL}/conversations/${conversationId}`, {}, reqHeader);
+};
+
+export const deleteMessageAPI = async (messageId, reqHeader) => {
+  return await commonApi("delete", `${serverURL}/messages/${messageId}`, {}, reqHeader);
+};
+
+
+// add comment
+export const addCommentAPI = async (reqBody, reqHeader) => {
+  return await commonApi("post", `${serverURL}/add-comment`, reqBody, reqHeader)
+}
+
+// get comment
+export const getCommentsAPI = async (blogId) => {
+  return await commonApi("get", `${serverURL}/get-comments/${blogId}`, "", {})
+}
+
+// reply comments by author
+export const replyCommentAPI = async (commentId, reqBody, reqHeader) => {
+  return await commonApi("put", `${serverURL}/reply-comment/${commentId}`, reqBody, reqHeader)
+}
+
+// delete comment
+export const deleteCommentAPI = async (commentId, reqHeader) => {
+  return await commonApi("delete",`${serverURL}/comment/${commentId}`,{},reqHeader)
+}
+// delete comment by author
+export const deletecommentauthorAPI = async(commentId,reqHeader)=>{
+  return await commonApi("delete",`${serverURL}/comments/${commentId}`,{},reqHeader)
+
+}
+
+// chatbot
+export const sendingChatbotAPI = async (questionIndex, answer, reqHeader) => {
+  const reqBody = { questionIndex, answer };
+
+  return await commonApi("post",`${serverURL}/chat/answer`,reqBody,reqHeader )
 }
 
 
 
-export const allblogadminAPI=async(reqHeader)=>{
-    return await commonApi("get",`${serverURL}/admin-allblog`,"",reqHeader)
-
+export const fetchAllChatsAPI = async (reqHeader) => {
+  return await commonApi("get", `${serverURL}/chat/all`, {}, reqHeader);
 }

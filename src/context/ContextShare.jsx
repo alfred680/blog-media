@@ -9,7 +9,14 @@ const ContextShare = ({ children }) => {
 
     const [searchKey, setSearchKey] = useState('')
     const [adminProfile, setAdminProfile] = useState({})
-    const [userProfile, setUserProfile] = useState({})
+    const [userProfile, setUserProfile] = useState({
+    _id: "",
+    following: [],
+    followers: [],
+    followingCount: 0,
+    followersCount: 0
+  });
+
 
     return (
         <userProfileContext.Provider value={{userProfile,setUserProfile}}>

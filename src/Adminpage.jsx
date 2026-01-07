@@ -2,7 +2,7 @@ import { faDotCircle, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react'
 import AdminHeader from './AdminHeader';
-import { allblogadminAPI, deleteadminblogAPI, reportgetAPI } from './server/Allapi';
+import { allblogadminAPI, deleteadminblogAPI, fetchAllChatsAPI, reportgetAPI } from './server/Allapi';
 
 function Adminpage() {
     const [allblogs, setallblog] = useState(true)
@@ -50,7 +50,7 @@ function Adminpage() {
         }
     };
 
-
+    // get blogs
     useEffect(() => {
         const fetchBlogs = async () => {
             const token = sessionStorage.getItem("token");
@@ -69,7 +69,7 @@ function Adminpage() {
     }, []);
 
 
-
+    // get report
     useEffect(() => {
         const fetchReports = async () => {
             const token = sessionStorage.getItem("token");
@@ -94,7 +94,23 @@ function Adminpage() {
 
         fetchReports();
     }, []);
+    const [chats, setChats] = useState([]);
 
+    useEffect(() => {
+        const getChats = async () => {
+            try {
+                const token = sessionStorage.getItem("token");
+                const reqHeader = { Authorization: `Bearer ${token}` };
+                const res = await fetchAllChatsAPI(reqHeader);
+                setChats(res.data);
+            } catch (err) {
+                console.log(err);
+                alert(err.response?.data?.message || "Error fetching chats");
+            }
+        };
+
+        getChats();
+    }, []);
     return (
         <div>
             <AdminHeader />
@@ -336,9 +352,40 @@ function Adminpage() {
 
 
                 </div>
-                {subscrition && <div>
-                    
-                </div>}
+                {subscrition && (
+                    <div className="p-6">
+                        <h2 className="text-2xl font-bold mb-4">User Support Chats</h2>
+
+
+                        <p className="text-gray-500">No chats found</p>
+
+
+                        <div
+
+                            className="mb-5 p-4 border rounded-xl bg-gray-50 shadow-sm"
+                        >
+                            <p className="font-semibold">
+
+                            </p>
+
+                            <div className="mt-3 space-y-2">
+
+                                <div className="p-2 bg-white rounded-lg border">
+                                    <p className="text-sm">
+                                        <span className="font-semibold">Q:</span>
+                                    </p>
+                                    <p className="text-sm text-gray-700">
+                                        <span className="font-semibold">A:</span>
+                                    </p>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                )}
+
             </div>
         </div>
     );

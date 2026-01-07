@@ -34,7 +34,9 @@ function App() {
         <Route path='/Premiemform' element={<Premiemform />} />
         <Route path='/paymentsucess' element={<Paymentsucess/>} />
         <Route path='/paymentfail' element={<Paymentfail/>} />
+       {/* <Route path='/inbox/:blogId' element={<Inbox/>} /> */}
         <Route path='/inbox' element={<Inbox/>} />
+
         <Route path='*' element={<PageNotFound />}/>
       </Routes>
     </>

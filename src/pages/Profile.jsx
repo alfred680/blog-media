@@ -4,11 +4,11 @@ import Header2 from "./Header2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComment, faDotCircle, faPenToSquare, faPlus, faTrash, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { toast, ToastContainer } from "react-toastify";
-import { addblogAPI, blogbyuser, deleteblogAPI, edituserprofileAPI, updateblogAPI } from "../server/Allapi";
+import { addblogAPI, blogbyuser, deleteblogAPI, deletecommentauthorAPI, edituserprofileAPI, followUserAPI, getCommentsAPI, replyCommentAPI, updateblogAPI } from "../server/Allapi";
 import { userProfileContext } from "../context/ContextShare";
 import { FaEllipsisH, FaSmile } from "react-icons/fa";
 
-function Profile() {
+function Profile({ blogId }) {
   const [editprofile, seteditprofile] = useState(false);
   const [post, setpost] = useState(true)
   const [open, setopen] = useState(false)
@@ -22,9 +22,20 @@ function Profile() {
   const [openMenuIndex, setOpenMenuIndex] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [comment, setComment] = useState("");
-      const [reply, setReply] = useState("");
-   const [commentbox, setCommentbox] = useState(false)
-      const [replayopen, setReplyopen] = useState(false)
+  const [comments, setComments] = useState([]);
+  const [activeBlogId, setActiveBlogId] = useState(null);
+  const [replyText, setReplyText] = useState({});
+
+  const [activeCommentId, setActiveCommentId] = useState(null);
+  const [activeOptionId, setActiveOptionId] = useState(null);
+
+
+
+
+
+  const [reply, setReply] = useState("");
+  const [commentbox, setCommentbox] = useState(false)
+  const [replayopen, setReplyopen] = useState(false)
   const [editData, setEditData] = useState({
     _id: "",
     title: "",
@@ -84,6 +95,7 @@ function Profile() {
   });
 
   console.log(blogDetails);
+
 
 
 
@@ -275,6 +287,56 @@ function Profile() {
       toast.error("Update failed");
     }
   };
+  // get all comments
+  const getComments = async (blogId) => {
+    if (!blogId) return;
+    try {
+      const res = await getCommentsAPI(blogId);
+      if (res.status === 200) {
+        setComments(res.data);
+      }
+    } catch (err) {
+      console.log(err);
+
+    }
+  };
+  // reply comment by author
+  const handleReply = async (commentId) => {
+    if (!reply.trim()) return;
+
+    try {
+      const reqHeader = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
+
+      await replyCommentAPI(commentId, { text: reply }, reqHeader);
+
+      toast.success("Reply added");
+      setReply("");
+      setActiveCommentId(null);
+      getComments(activeBlogId); // refresh comments
+    } catch (err) {
+      console.log(err);
+      toast.error("Reply failed");
+    }
+  };
+  const handledeleteauthor = async (commentId) => {
+    try {
+      const reqHeader = {
+        Authorization: `Bearer ${token}`
+      }
+      const res = await deletecommentauthorAPI(commentId,reqHeader)
+      if (res.status === 200) {
+        setComments(prev => prev.filter(c => c._id !== commentId))
+        toast.success("Comment Is Deleted")
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error("Delete Comment Is Failed")
+    }
+
+  }
 
 
 
@@ -565,7 +627,15 @@ function Profile() {
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex"
                         >
                           <FontAwesomeIcon icon={faComment} />
-                          <span className="ml-3 font-bold">Comments</span>
+                          <span
+                            onClick={() => {
+                              setCommentbox(true);
+                              setActiveBlogId(detail._id);
+                              getComments(detail._id);
+
+                            }}
+
+                            className="ml-3 font-bold">Comments</span>
                         </li>
                       </ul>
                       {isEditOpen && (
@@ -694,94 +764,121 @@ function Profile() {
               </div>
             </div>
           )}
-          {commentbox && <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-            <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-4 relative">
+          {commentbox && (
+            <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+              <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-4 relative">
 
-              {/* Header */}
-              <div className="flex justify-between items-center border-b pb-2">
-                <h2 className="text-lg font-semibold">Comments</h2>
-                <button onClick={() => setCommentbox(false)} className="text-gray-500 text-xl">×</button>
-              </div>
-              {option && <div className='ml-140 bg-white border w-25 '>
-                <button className=' ml-2 '><b>delete</b></button>
-                <hr />
-                <button className=' ml-4'><b>edit</b></button>
-              </div>}
-
-              {/* Comment */}
-              <div className="flex gap-3 mt-4">
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
-                  A
-                </div>
-
-
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">Liam Rubicorn</h4>
-
-                    </div>
-                    <FaEllipsisH onClick={() => setoption(prev => !prev)} className="text-gray-400 cursor-pointer" />
-                  </div>
-
-                  <p className="mt-2 text-gray-700">
-                    A better understanding of usage can aid in prioritizing future
-                    efforts i'm sorry I replied to your emails after only three weeks
-                  </p>
-
-                  {/* Reply button */}
-                  <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                    <button onClick={() => setReplyopen(true)} className="font-medium hover:text-purple-600">
-                      REPLY
-                    </button>
-
-                  </div>
-
-                  {/* Reply input */}
-                  {replayopen && <div className="relative mt-3">
-                    <input
-                      type="text"
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      placeholder="Enter your comment"
-                      className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
-                    />
-                    <div className="absolute right-3 top-2.5 flex items-center gap-2">
-                      <FaSmile className="text-gray-400 cursor-pointer" />
-                      <button className="bg-purple-600 text-white px-3 py-1 rounded-md text-sm">
-                        Send
-                      </button>
-                    </div>
-                  </div>}
-                </div>
-              </div>
-
-              {/* New Comment Input */}
-              <div className="relative mt-6">
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Enter your comment"
-                  className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
-                />
-                <div className="absolute right-3 top-2.5 flex items-center gap-2">
-                  <FaSmile className="text-gray-400 cursor-pointer" />
+               
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h2 className="text-lg font-semibold">Comments</h2>
                   <button
-                    disabled={!comment}
-                    className={`px-3 py-1 rounded-md text-sm ${comment
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      }`}
+                    onClick={() => setCommentbox(false)}
+                    className="text-gray-500 text-xl"
                   >
-                    Send
+                    ×
                   </button>
+                </div>
+
+                
+                <div className="mt-4 flex flex-col gap-4 max-h-96 overflow-y-auto">
+                  {comments.length > 0 ? (
+                    comments.map((c) => (
+                      <div
+                        key={c._id}
+                        className="flex flex-col gap-2 border-b pb-3"
+                      >
+                        
+                        <div className="flex gap-3">
+                          <img
+                            src={
+                              c.userId?.profile
+                                ? `http://localhost:4000/upload/${c.userId.profile}`
+                                : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                            }
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+
+                          <div className="flex-1 flex flex-col">
+                            
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-semibold">{c.userId?.username}</h4>
+                              <FaEllipsisH
+                                onClick={() =>
+                                  setActiveOptionId(prev => (prev === c._id ? null : c._id))
+                                }
+                                className="text-gray-400 cursor-pointer"
+                              />
+                            </div>
+
+                            
+                            <p className="mt-1 text-gray-700">{c.text}</p>
+
+                            {/* Author Reply */}
+                            {c.reply?.text && (
+                              <div className="ml-4 mt-2 p-2 bg-gray-100 rounded text-sm">
+                                <b>Author reply:</b> {c.reply.text}
+                              </div>
+                            )}
+
+                            {/* Reply Button */}
+                            <div className="mt-2">
+                              <button
+                                onClick={() =>
+                                  setActiveCommentId(
+                                    activeCommentId === c._id ? null : c._id
+                                  )
+                                }
+                                className="text-sm text-gray-500 hover:text-purple-600"
+                              >
+                                REPLY
+                              </button>
+                            </div>
+
+                            {/* Reply Input */}
+                            {activeCommentId === c._id && (
+                              <div className="relative mt-3">
+                                <input
+                                  type="text"
+                                  value={reply}
+                                  onChange={(e) => setReply(e.target.value)}
+                                  placeholder="Write a reply..."
+                                  className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
+                                />
+                                <div className="absolute right-3 top-2.5 flex items-center gap-2">
+                                  <FaSmile className="text-gray-400 cursor-pointer" />
+                                  <button
+                                    onClick={() => handleReply(c._id)}
+                                    className="bg-purple-600 text-white px-3 py-1 rounded-md text-sm"
+                                  >
+                                    Send
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                       
+                        {activeOptionId === c._id && (
+                          <div className="ml-12 mt-2 h-10 px-6 rounded-2xl bg-white border w-28">
+                            <button
+                              onClick={() => handledeleteauthor(c._id)}
+                              className="mt-2 text-red-600 font-bold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-400 mt-6">No comments yet</p>
+                  )}
                 </div>
               </div>
             </div>
-          </div>}
+          )}
+
 
 
 

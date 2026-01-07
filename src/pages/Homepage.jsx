@@ -1,24 +1,45 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleExclamation, faComments, faDotCircle, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons'
 import Header2 from './Header2'
-import { allblogAPI, reportblogAPI } from '../server/Allapi'
-import { toast } from 'react-toastify'
+import { addCommentAPI, allblogAPI, deleteCommentAPI, followUserAPI, getCommentsAPI, reportblogAPI, sendingChatbotAPI } from '../server/Allapi'
+import { toast, ToastContainer } from 'react-toastify'
 import { FaEllipsisH, FaSmile } from "react-icons/fa";
+import { userProfileContext } from '../context/ContextShare'
+import { useNavigate } from 'react-router-dom'
 
-function Homepage() {
-  
+
+
+const predefinedQuestions = [
+    
+    "How Can I Help You",
+    "You Issue Is Reported And Your issue Resove In 48 Hours",
+    
+];
+
+function Homepage({ blogId }) {
+    const [currentBlogId, setCurrentBlogId] = useState(null);
+    const [openOptionId, setOpenOptionId] = useState(null);
+
+
+
     const [option, setoption] = useState(false)
     const [reportReason, setReportReason] = useState("");
+    const [reportSubmitting, setReportSubmitting] = useState(false);
     const [comment, setComment] = useState("");
     const [reply, setReply] = useState("");
     const [commentbox, setCommentbox] = useState(false)
     const [replayopen, setReplyopen] = useState(false)
     const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi 👋 Please tell us about your issue." }
-  ]);
+    const [questionIndex, setQuestionIndex] = useState(0);
+    const [answer, setAnswer] = useState("");
+    const [messages, setMessages] = useState([]);
+
+
+    const { userProfile, setUserProfile } = useContext(userProfileContext)
+    const navigate = useNavigate();
+
 
 
 
@@ -38,25 +59,174 @@ function Homepage() {
 
     const [token, setToken] = useState('')
     console.log(token);
+    const [profileUser, setProfileUser] = useState(null);
 
     // get all blogs
     const allblog = async (searchKey, token) => {
-
         const reqHeader = {
             Authorization: `Bearer ${token}`
-        }
-        const result = await allblogAPI(searchKey, reqHeader)
+        };
+        const result = await allblogAPI(searchKey, reqHeader);
         console.log(result.data);
 
-        setAllBlog(result.data)
+        // Map blogs to ensure author has isFollowing and followersCount (handle missing author)
+        const mappedBlogs = (result.data || []).map(blog => ({
+            ...blog,
+            author: {
+                ...(blog.author || {}),
+                isFollowing: userProfile?.following?.includes(blog.author?._id) || false,// default false
+                followersCount: blog.followersCount ?? 0 // default 0
+            }
+        }));
+
+        setAllBlog(mappedBlogs);
+    };
+
+    const [loadingFollow, setLoadingFollow] = useState(false);
+
+    const handleFollow = async (blogId, index) => {
+        try {
+            setLoadingFollow(true);
+            const reqHeader = { Authorization: `Bearer ${token}` };
+            const res = await followUserAPI(blogId, reqHeader); // send blogId
+
+            if (res.status === 200) {
+                // update blog author in frontend
+                setAllBlog(prev =>
+                    prev.map((blog, i) =>
+                        i === index
+                            ? {
+                                ...blog,
+                                author: {
+                                    ...blog.author,
+                                    isFollowing: res.data.followed,
+                                    followersCount: res.data.followersCount
+                                }
+                            }
+                            : blog
+                    )
+                );
+                toast.success(res.data.message);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingFollow(false);
+        }
+    };
 
 
+    const [replyText, setReplyText] = useState({});
+    const [comments, setComments] = useState([]); // fetched comments
+
+
+
+    const loggedUserId = sessionStorage.getItem("userId");
+    // get all comments
+    const getComments = async (blogId) => {
+        if (!blogId) return;
+        try {
+            const res = await getCommentsAPI(blogId);
+            if (res.status === 200) {
+                setComments(res.data);
+            }
+        } catch (err) {
+            console.log(err);
+
+        }
     }
 
-    const submitReport = async () => {
-        if (!reportReason) {
-            alert("Please enter a reason for reporting");
 
+
+    // add comment
+    const handleComment = async () => {
+        if (!comment.trim()) return;
+        if (!currentBlogId) {
+            toast.error("Please select a blog first!");
+            return;
+        }
+
+        try {
+            const reqHeader = {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token || sessionStorage.getItem("token")}`
+            };
+
+            const res = await addCommentAPI(
+                { blogId: currentBlogId, text: comment },
+                reqHeader
+            );
+
+            if (res.status === 200) {
+                toast.success("Comment added");
+                setComment("");
+                getComments(currentBlogId); // refresh comments
+            }
+        } catch (err) {
+            console.error("Add comment error:", err);
+            toast.error("Failed to add comment");
+        }
+    }
+    // delete comment
+    const handleDeleteComment = async (commentId) => {
+        try {
+            const reqHeader = { Authorization: `Bearer ${token}` };
+            await deleteCommentAPI(commentId, reqHeader);
+
+            toast.success("Comment deleted ");
+            setComments(activeBlogId);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Delete failed");
+        }
+    }
+
+
+    // chatbot 
+    const handleSendAnswer = async () => {
+        if (!answer.trim()) return;
+
+        try {
+            const reqHeader = { Authorization: `Bearer ${token}` };
+            const res = await sendingChatbotAPI(questionIndex, answer, reqHeader);
+
+            // Add user's answer and question to messages
+            setMessages(prev => [
+                ...prev,
+                { sender: "bot", text: predefinedQuestions[questionIndex] },
+                { sender: "user", text: answer }
+            ]);
+
+            setAnswer(""); // clear input
+
+            // Move to next question
+            if (res.data.nextQuestion) {
+                setQuestionIndex(questionIndex + 1);
+            } else {
+               
+                setQuestionIndex(0); // reset for next chat
+            }
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "Error sending answer");
+        }
+    };
+
+
+
+
+
+    useEffect(() => {
+        getComments();
+    }, [blogId]);
+
+
+
+
+
+    //  submit report
+    const submitReport = async () => {
+        if (!reportReason || reportReason.trim().length < 5) {
+            toast.error("Please enter a reason (at least 5 characters)");
             return;
         }
 
@@ -64,22 +234,29 @@ function Homepage() {
         const headers = { Authorization: `Bearer ${token}` };
 
         const blogId = allBlog[reportOpen]?._id; // get the current blog's id
+        if (!blogId) {
+            toast.error("Unable to determine which blog to report");
+            return;
+        }
 
         try {
+            setReportSubmitting(true);
             const res = await reportblogAPI(headers, blogId, { reason: reportReason });
             if (res?.status === 201) {
-                alert("Reporting successfull")
+                toast.success("Report submitted");
+                setReportOpen(null);
+                setReportReason("");
             } else {
-                alert(res.response?.data || "Failed to submit report");
+                const msg = res?.data || res?.response?.data || "Failed to submit report";
+                toast.error(msg);
             }
         } catch (err) {
             console.error(err);
-            alert("Something went wrong");
+            const msg = err.response?.data || err.message || "Something went wrong";
+            toast.error(msg);
+        } finally {
+            setReportSubmitting(false);
         }
-
-        // Close modal and reset
-        setReportOpen(null);
-        setReportReason("");
     };
     useEffect(() => {
         const t = sessionStorage.getItem('token')
@@ -90,6 +267,8 @@ function Homepage() {
 
 
     }, [])
+    console.log(comment);
+
 
 
     return (
@@ -123,7 +302,7 @@ function Homepage() {
                                     {activeMenu === index && (
                                         <div style={{ marginTop: "-20px" }} className="absolute border ml-110 top-10 z-50">
                                             <div
-                                                onClick={() => setReportOpen(index)}
+                                                onClick={() => { setReportOpen(index); setActiveMenu(null); }}
                                                 className="flex items-center border bg-white  px-3 py-1  shadow-lg cursor-pointer hover:bg-red-600 hover:scale-105 transition-all duration-200"
                                             >
                                                 <FontAwesomeIcon icon={faCircleExclamation} className="text-lg" />
@@ -134,24 +313,36 @@ function Homepage() {
                                                 className="flex items-center px-3 py-1 border  bg-white  shadow-lg cursor-pointer hover:bg-amber-100 hover:scale-105 transition-all duration-200"
                                             >
                                                 <FontAwesomeIcon icon={faMessage} className="text-lg" />
-                                                <h2 className="text-sm font-semibold">message</h2>
+                                                <h2 onClick={() => navigate(`/inbox/${item._id}`)} className="text-sm font-semibold">message</h2>
                                             </div>
                                             <div
-
-                                                className="flex items-center px-3 py-1 border  bg-white  shadow-lg cursor-pointer hover:bg-blue-100 hover:scale-105 transition-all duration-200"
+                                                className={`flex items-center px-3 py-1 border bg-white shadow-lg
+                                                 ${loadingFollow ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-100 cursor-pointer"}`}
+                                                onClick={() => handleFollow(item.author_id, index)}
                                             >
-                                                <FontAwesomeIcon icon={faPlus} className="text-lg" />
-                                                <h2 className="text-sm font-semibold">Follow</h2>
+                                                <FontAwesomeIcon icon={faPlus} />
+                                                <h2 className="text-sm font-semibold ml-2">
+                                                    {item.author?.isFollowing ? "Unfollow" : "Follow"}
+                                                </h2>
                                             </div>
+
+
                                             <div
 
                                                 className="flex items-center px-3 py-1 border  bg-white  shadow-lg cursor-pointer hover:bg-blue-100 hover:scale-105 transition-all duration-200"
                                             >
                                                 <FontAwesomeIcon icon={faComments} className="text-lg" />
-                                                <h2 onClick={() => setCommentbox(true)} className="text-sm font-semibold">Comments</h2>
+                                                <h2 onClick={() => {
+                                                    setCommentbox(true);
+                                                    setCurrentBlogId(item._id);
+                                                    getComments(item._id);
+                                                    setActiveMenu(false)
+                                                }} className="text-sm font-semibold">Comments</h2>
+
                                             </div>
                                         </div>
                                     )}
+
 
                                     {/* Blog Content */}
                                     <div className="overflow-hidden transition-all duration-500 overflow-y-auto p-5">
@@ -169,10 +360,10 @@ function Homepage() {
                                         <h1 className="font-bold text-2xl text-center mt-4">{item.title || "No Title"}</h1>
 
                                         <p className="text-justify px-10 text-sm mt-5">
-                                            {expanded[index] ? item.content : item.content.split("\n").slice(0, 1).join("\n")}
+                                            {expanded[index] ? (item.content ?? '') : (item.content ?? '').split("\n").slice(0, 1).join("\n")}
                                         </p>
 
-                                        {item.content.split("\n").length > 2 && (
+                                        {(item.content ?? '').split("\n").length > 2 && (
                                             <p
                                                 onClick={() => toggleReadMore(index)}
                                                 className="text-blue-400 hover:text-green-400 cursor-pointer mt-3 text-right"
@@ -181,6 +372,7 @@ function Homepage() {
                                             </p>
                                         )}
                                     </div>
+
                                 </div>
                             ))}
                         </div>
@@ -188,8 +380,8 @@ function Homepage() {
                 </div>
 
                 {/* ---------------- Report Modal ---------------- */}
-                {reportOpen && (
-                    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999]'>
+                {reportOpen !== null && (
+                    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-999'>
                         <div className='bg-white shadow-xl rounded-2xl p-6 w-[400px]'>
                             <h2 className='text-xl font-bold text-center mb-4'>Report Content</h2>
 
@@ -204,16 +396,17 @@ function Homepage() {
                             <div className='flex justify-between mt-4'>
                                 <button
                                     className='bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500'
-                                    onClick={() => setReportOpen(false)}
+                                    onClick={() => setReportOpen(null)}
                                 >
                                     Cancel
                                 </button>
 
                                 <button
-                                    className='bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600'
+                                    disabled={reportSubmitting}
+                                    className={`px-4 py-2 rounded-lg ${reportSubmitting ? 'bg-red-300 text-white' : 'bg-red-500 text-white hover:bg-red-600'}`}
                                     onClick={submitReport}
                                 >
-                                    Submit
+                                    {reportSubmitting ? 'Submitting...' : 'Submit'}
                                 </button>
                             </div>
                         </div>
@@ -228,84 +421,96 @@ function Homepage() {
                                 <h2 className="text-lg font-semibold">Comments</h2>
                                 <button onClick={() => setCommentbox(false)} className="text-gray-500 text-xl">×</button>
                             </div>
-                            {option && <div className='ml-140 bg-white border w-25 '>
-                                <button className=' ml-2 '><b>delete</b></button>
-                                <hr />
-                                <button className=' ml-4'><b>edit</b></button>
-                            </div>}
+
 
                             {/* Comment */}
                             <div className="flex gap-3 mt-4">
                                 {/* Avatar */}
-                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
-                                    A
-                                </div>
+
 
 
                                 {/* Content */}
                                 <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h4 className="font-semibold">Liam Rubicorn</h4>
+                                    {comments && comments.length > 0 ? (
+                                        comments.map((c) => (
+                                            <div key={c._id} className="mb-4 flex gap-2">
+                                                {/* Avatar */}
+                                                <img
+                                                    src={c.userId.profile ? `http://localhost:4000/upload/${c.userId.profile}` : "/default-avatar.png"}
+                                                    alt={c.userId.username}
+                                                    className="w-10 h-10 rounded-full"
+                                                />
 
-                                        </div>
-                                        <FaEllipsisH onClick={() => setoption(prev => !prev)} className="text-gray-400 cursor-pointer" />
-                                    </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <h4 className="font-semibold">{c.userId.username}</h4>
+                                                        <FaEllipsisH
+                                                            onClick={() => setOpenOptionId(c._id)}
+                                                            className="text-gray-400 cursor-pointer"
+                                                        />
+                                                    </div>
+                                                    <p className="mt-2 text-gray-700">{c.text}</p>
+                                                    {c.reply?.text && (
+                                                        <div className="ml-6 mt-1 p-2 bg-gray-100 rounded">
+                                                            <span className="font-semibold">Author Reply: </span>
+                                                            {c.reply.text}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {openOptionId === c._id && (
+                                                    <div className="ml-40 bg-white border w-28 h-8 shadow rounded">
 
-                                    <p className="mt-2 text-gray-700">
-                                        A better understanding of usage can aid in prioritizing future
-                                        efforts i'm sorry I replied to your emails after only three weeks
-                                    </p>
+                                                        <button
+                                                            onClick={() => handleDeleteComment(c._id)}
+                                                            className="ml-2 text-red-600"
+                                                        >
+                                                            <b>Delete</b>
+                                                        </button>
 
-                                    {/* Reply button */}
-                                    <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                                        <button onClick={() => setReplyopen(true)} className="font-medium hover:text-purple-600">
-                                            REPLY
-                                        </button>
 
-                                    </div>
 
-                                    {/* Reply input */}
-                                    {replayopen && <div className="relative mt-3">
-                                        <input
-                                            type="text"
-                                            value={reply}
-                                            onChange={(e) => setReply(e.target.value)}
-                                            placeholder="Enter your comment"
-                                            className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
-                                        />
-                                        <div className="absolute right-3 top-2.5 flex items-center gap-2">
-                                            <FaSmile className="text-gray-400 cursor-pointer" />
-                                            <button className="bg-purple-600 text-white px-3 py-1 rounded-md text-sm">
-                                                Send
-                                            </button>
-                                        </div>
-                                    </div>}
+
+
+                                                    </div>
+                                                )}
+
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-gray-400 mt-2">No comments yet.</p>
+                                    )}
+
                                 </div>
+
                             </div>
 
                             {/* New Comment Input */}
                             <div className="relative mt-6">
                                 <input
+                                    className='border w-100 mt-3 rounded-2xl'
                                     type="text"
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Enter your comment"
-                                    className="w-full border rounded-lg px-4 py-2 pr-20 focus:outline-purple-500"
+
                                 />
-                                <div className="absolute right-3 top-2.5 flex items-center gap-2">
-                                    <FaSmile className="text-gray-400 cursor-pointer" />
+
+                                <div className="absolute ml-106 top-2.5 flex items-center   gap-2">
+
+                                    <FaSmile className="text-gray-400 cursor-pointer " />
                                     <button
-                                        disabled={!comment}
-                                        className={`px-3 py-1 rounded-md text-sm ${comment
-                                            ? "bg-purple-600 text-white"
-                                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+
+                                        disabled={!comment.trim()}
+                                        onClick={handleComment}
+                                        className={`px-3 py-1 rounded-md text-sm ${comment.trim()
+                                            ? "bg-purple-600 text-white border"
+                                            : "bg-gray-200 text-gray-400 cursor-not-allowed border"
                                             }`}
                                     >
                                         Send
                                     </button>
                                 </div>
                             </div>
+
                         </div>
                     </div>}
                     <button
@@ -318,11 +523,10 @@ function Homepage() {
                     {/* Chat Box */}
                     {open && (
                         <div className="fixed bottom-24 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col">
-
                             {/* Header */}
                             <div className="bg-black text-white p-4 rounded-t-2xl flex justify-between items-center">
                                 <h3 className="font-semibold">Issue Support</h3>
-                                <button onClick={() => setOpen(false)}>✖</button>
+                                <button onClick={() => setOpen(false)}>X</button>
                             </div>
 
                             {/* Messages */}
@@ -330,8 +534,7 @@ function Homepage() {
                                 {messages.map((msg, index) => (
                                     <div
                                         key={index}
-                                        className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"
-                                            }`}
+                                        className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                                     >
                                         <div
                                             className={`px-4 py-2 rounded-xl max-w-xs text-sm ${msg.sender === "user"
@@ -344,29 +547,27 @@ function Homepage() {
                                     </div>
                                 ))}
 
-                                {/* Issue Category Buttons */}
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    {["Technical Issue", "Payment Issue", "Upload Issue", "Other"].map(
-                                        (item, i) => (
-                                            <button
-                                                key={i}
-                                                className="px-3 py-1 text-xs border rounded-full hover:bg-black hover:text-white transition"
-                                            >
-                                                {item}
-                                            </button>
-                                        )
-                                    )}
-                                </div>
+                                {/* Show current question */}
+                                {questionIndex < predefinedQuestions.length && (
+                                    <div className="mt-2 font-semibold text-gray-700">
+                                        {predefinedQuestions[questionIndex]}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Input */}
                             <div className="p-3 border-t flex gap-2">
                                 <input
                                     type="text"
-                                    placeholder="Describe your issue..."
+                                    placeholder="Type your answer..."
+                                    value={answer}
+                                    onChange={e => setAnswer(e.target.value)}
                                     className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
                                 />
-                                <button className="bg-black text-white px-4 py-2 rounded-full">
+                                <button
+                                    onClick={handleSendAnswer}
+                                    className="bg-black text-white px-4 py-2 rounded-full"
+                                >
                                     Send
                                 </button>
                             </div>
@@ -375,6 +576,7 @@ function Homepage() {
 
 
                 </div>
+                <ToastContainer position='top-center' />
 
 
 
