@@ -95,6 +95,8 @@ function Adminpage() {
         fetchReports();
     }, []);
     const [chats, setChats] = useState([]);
+    console.log(chats);
+
 
     useEffect(() => {
         const getChats = async () => {
@@ -143,7 +145,7 @@ function Adminpage() {
                 <div className='flex gap-18 justify-center font-bold bg-white p-5 mb-10' style={{ fontFamily: "Playfair Display", marginTop: "-30px" }}>
                     <h1 onClick={() => { setallblog(true), setrequest(false), setsubscrition(false) }} className={allblogs ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : "rounded-4xl border p-2 px-4"} >All Blogs</h1>
                     <h1 onClick={() => { setallblog(false), setrequest(true), setsubscrition(false) }} className={request ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'} >Request</h1>
-                    <h1 onClick={() => { setallblog(false), setrequest(false), setsubscrition(true) }} className={subscrition ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'}  >Analyse</h1>
+                    <h1 onClick={() => { setallblog(false), setrequest(false), setsubscrition(true) }} className={subscrition ? 'cursor-pointer text-white rounded-4xl border p-2 px-4 bg-black' : 'rounded-4xl border p-2 px-4'}  >Issue Support</h1>
 
 
 
@@ -356,35 +358,52 @@ function Adminpage() {
                     <div className="p-6">
                         <h2 className="text-2xl font-bold mb-4">User Support Chats</h2>
 
+                        {/* No chats */}
+                        {chats.length === 0 && (
+                            <p className="text-gray-500">No chats found</p>
+                        )}
 
-                        <p className="text-gray-500">No chats found</p>
+                        {/* Chats */}
+                        {chats.map((chat) => (
+                            <div
+                                key={chat._id}
+                                className="mb-5 p-4 border rounded-xl bg-gray-50 shadow-sm"
+                            >
+                                <p className="font-semibold mb-3">
+                                    User: {chat.userId?.username || "Unknown"}
+                                </p>
 
+                                <div className="mt-3 space-y-2">
 
-                        <div
+                                    {chat.qa?.map((item) => (
+                                        <div key={item._id} className="space-y-1">
 
-                            className="mb-5 p-4 border rounded-xl bg-gray-50 shadow-sm"
-                        >
-                            <p className="font-semibold">
+                                            {/* Question */}
+                                            <div className="p-2 bg-white rounded-lg border">
+                                                <p className="text-sm">
+                                                    <span className="font-semibold">Q:</span> {item.question}
+                                                </p>
+                                            </div>
 
-                            </p>
+                                            {/* Answer */}
+                                            {item.answer && (
+                                                <div className="p-2 bg-white rounded-lg border">
+                                                    <p className="text-sm text-gray-700">
+                                                        <span className="font-semibold">A:</span> {item.answer}
+                                                    </p>
+                                                </div>
+                                            )}
 
-                            <div className="mt-3 space-y-2">
+                                        </div>
+                                    ))}
 
-                                <div className="p-2 bg-white rounded-lg border">
-                                    <p className="text-sm">
-                                        <span className="font-semibold">Q:</span>
-                                    </p>
-                                    <p className="text-sm text-gray-700">
-                                        <span className="font-semibold">A:</span>
-                                    </p>
                                 </div>
-
                             </div>
-                        </div>
-
+                        ))}
 
                     </div>
                 )}
+
 
             </div>
         </div>

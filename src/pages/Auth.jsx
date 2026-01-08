@@ -76,7 +76,7 @@ function Auth({ regester }) {
 
         }
     }
-    // goo
+    // google login
    const handleGoogleLogin = async (credentialResponse) => {
 
     const details = jwtDecode(credentialResponse.credential)
@@ -116,7 +116,7 @@ function Auth({ regester }) {
                         <input value={userdetails.email} onChange={(e) => setuserdetails({ ...userdetails, email: e.target.value })} style={{ width: "370px", marginLeft: "200px", marginTop: "80px", height: "40px" }} className='border rounded-3xl' type="text" placeholder=' Email' />
                         {regester && <input value={userdetails.username} onChange={(e) => setuserdetails({ ...userdetails, username: e.target.value })} style={{ width: "370px", marginLeft: "200px", height: "40px" }} className='border rounded-3xl' type="text" placeholder=' UserName' />}
                         <input value={userdetails.password} onChange={(e) => setuserdetails({ ...userdetails, password: e.target.value })} style={{ width: "370px", marginLeft: "200px", height: "40px" }} className='border rounded-3xl' type="password" placeholder=' Password' />
-                        <a style={{ marginLeft: "400px", fontFamily: "Intel One Mono" }} className='text-blue-600' href="">Forget Passord ?</a>
+                        <a style={{ marginLeft: "400px", fontFamily: "Intel One Mono" }} className='text-blue-600' href=""><Link to={'/forgetpassword'}>Forget Passord ?</Link></a>
                         {!regester ? <button onClick={handlelogin} style={{ marginLeft: "200px", fontFamily: "Intel One Mono", width: "370px", height: "40px" }} className='bg-black text-white rounded-4xl'>Login</button>
                             : <button onClick={handleRegister} style={{ marginLeft: "200px", fontFamily: "Intel One Mono", width: "370px", height: "40px" }} className='bg-blue-600 text-white rounded-4xl'>Register</button>}
                         <p className='text-center'>-------- Or Continue With -------- </p>

@@ -15,6 +15,8 @@ import PageNotFound from './pages/PageNotFound'
 import Paymentsucess from './pages/Paymentsucess'
 import Paymentfail from './pages/Paymentfail'
 import Inbox from './pages/Inbox'
+import FogetPassword from './pages/FogetPassword'
+import ResetPassword from './pages/ResetPassword'
 
 function App() {
   return (
@@ -34,8 +36,11 @@ function App() {
         <Route path='/Premiemform' element={<Premiemform />} />
         <Route path='/paymentsucess' element={<Paymentsucess/>} />
         <Route path='/paymentfail' element={<Paymentfail/>} />
-       {/* <Route path='/inbox/:blogId' element={<Inbox/>} /> */}
+       <Route path='/inbox/:blogId' element={<Inbox/>} />
         <Route path='/inbox' element={<Inbox/>} />
+        <Route  path='/forgetpassword' element={<FogetPassword/>}   />
+        <Route path='/resetpassword' element={<ResetPassword/>} />
+        
 
         <Route path='*' element={<PageNotFound />}/>
       </Routes>
